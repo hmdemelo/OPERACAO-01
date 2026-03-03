@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MENTOR
+  STUDENT
+}
+
+model User {
+  id             String    @id @default(uuid())
+  name           String
+  email          String    @unique
+  passwordHash   String
+  role           Role      @default(STUDENT) // Default role
+  phone          String?
+  cpf            String?
+  birthDate      DateTime?
+  targetExam     String?
+  educationLevel String?
+  dailyHours     Int?
+  addressCity    String?
+  addressState   String?
+  notes          String?
+  active         Boolean   @default(true)
+
+  logs            StudyLog[]
+  userSubjects    UserSubject[]
+  userConcursos   UserConcurso[]
+  authoredHistory StudyLogHistory[] @relation("HistoryAuthor")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  weeklyPlans WeeklyPlan[]
+  mentorLinks MentorshipLink[] @relation("MentorLinks")
+  studentLink MentorshipLink?  @relation("StudentLinks")
+}
+
+model MentorshipLink {
+  id        String @id @default(cuid())
+  mentorId  String
+  studentId String @unique
+
+  mentor  User @relation("MentorLinks", fields: [mentorId], references: [id], onDelete: Cascade)
+  student User @relation("StudentLinks", fields: [studentId], references: [id], onDelete: Cascade)
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([mentorId])
+  @@index([studentId])
+}
+
+model StudyLog {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date              DateTime
+  hoursStudied      Float
+  questionsAnswered Int
+  correctAnswers    Int
+
+  // Relations
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  contentId String?
+  content   Content? @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  topic String? // Retro-compatibility or specific topic detail if needed, keeping as optional or removing if fully replaced by Content. User asked to remove 'subject' string, keeping 'topic' as per previous schema but maybe it maps to Content now? User script didn't explicitly say remove 'topic', only 'subject'.
+  // User instruction: "Remove string subject field"
+
+  createdAt DateTime @default(now())
+
+  history        StudyLogHistory[]
+  weeklyPlanItem WeeklyPlanItem?
+
+  @@index([userId])
+  @@index([date])
+}
+
+model Subject {
+  id          String           @id @default(cuid())
+  name        String
+  description String?          @db.VarChar(2048)
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  contents    Content[]
+  studyLogs   StudyLog[]
+  users       UserSubject[]
+  planItems   WeeklyPlanItem[]
+}
+
+model Content {
+  id          String     @id @default(cuid())
+  name        String
+  description String?    @db.VarChar(2048)
+  subjectId   String
+  subject     Subject    @relation(fields: [subjectId], references: [id])
+  createdAt   DateTime   @default(now())
+  studyLogs   StudyLog[]
+
+  @@index([subjectId])
+}
+
+model UserSubject {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
+
+  @@unique([userId, subjectId])
+}
+
+model UserConcurso {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concursoId String
+  concurso   Concurso @relation(fields: [concursoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, concursoId])
+}
+
+model Concurso {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.VarChar(2048)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users UserConcurso[]
+}
+
+model StudyLogHistory {
+  id             String   @id @default(cuid())
+  studyLogId     String
+  studyLog       StudyLog @relation(fields: [studyLogId], references: [id], onDelete: Cascade)
+  previousValues Json
+  newValues      Json
+  changedById    String
+  changedBy      User     @relation("HistoryAuthor", fields: [changedById], references: [id])
+  changedAt      DateTime @default(now())
+
+  @@index([studyLogId])
+  @@index([changedById])
+}
+
+model FeaturedStudent {
+  id        String   @id @default(cuid())
+  name      String
+  role      String
+  imageUrl  String
+  quote     String
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Plan {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  price           Float
+  oldPrice        Float? // Para mostrar "De: R$ XX"
+  installments    String? // Ex: "Pagamento Mensal" ou "12x de..."
+  features        String[]
+  whatsappMessage String?
+  highlighted     Boolean  @default(false)
+  active          Boolean  @default(true)
+  order           Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model MethodItem {
+  id          String   @id @default(cuid())
+  step        String
+  title       String
+  description String
+  icon        String
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model WeeklyPlan {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate DateTime
+  active    Boolean          @default(true)
+  items     WeeklyPlanItem[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([userId, startDate])
+  @@index([userId])
+}
+
+model WeeklyPlanItem {
+  id              String     @id @default(cuid())
+  planId          String
+  plan            WeeklyPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  dayOfWeek       Int // 0=Sunday, 1=Monday, etc.
+  blockIndex      Int // 1, 2, 3... ordering within the day
+  subjectId       String?
+  subject         Subject?   @relation(fields: [subjectId], references: [id])
+  content         String?
+  durationMinutes Int?
+  notes           String?
+  questionsDone   Int? // Added for performance tracking
+  correctCount    Int? // Added for performance tracking
+  completed       Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  studyLogId String?   @unique
+  studyLog   StudyLog? @relation(fields: [studyLogId], references: [id])
+
+  @@index([planId])
+  @@index([subjectId])
+}
