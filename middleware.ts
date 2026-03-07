@@ -1,36 +1,59 @@
-import { withAuth } from "next-auth/middleware"
 import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+import { getToken } from "next-auth/jwt"
 
-export default withAuth(
-    function middleware(req) {
-        if (
-            req.nextUrl.pathname.startsWith("/admin") &&
-            !["ADMIN", "MENTOR"].includes(req.nextauth.token?.role as string)
-        ) {
-            return NextResponse.redirect(new URL("/student/dashboard", req.url))
-        }
+// Routes that are always accessible regardless of maintenance mode
+const PUBLIC_PATHS = ["/signin", "/maintenance", "/api/auth"]
+const ADMIN_PATHS = ["/admin"]
 
-        if (
-            req.nextUrl.pathname.startsWith("/student") &&
-            req.nextauth.token?.role !== "STUDENT"
-        ) {
-            if (["ADMIN", "MENTOR"].includes(req.nextauth.token?.role as string)) {
-                return NextResponse.redirect(new URL("/admin/dashboard", req.url))
-            }
-            return NextResponse.rewrite(
-                new URL("/signin?message=Not Authorized", req.url)
-            )
-        }
+export async function middleware(request: NextRequest) {
+    const { pathname } = request.nextUrl
 
-    },
-    {
-        callbacks: {
-            authorized: ({ token }) => !!token,
-        },
-        pages: {
-            signIn: "/signin",
-        },
+    // Skip static assets and internal Next.js paths
+    if (
+        pathname.startsWith("/_next") ||
+        pathname.startsWith("/favicon") ||
+        pathname.startsWith("/public")
+    ) {
+        return NextResponse.next()
     }
-)
 
-export const config = { matcher: ["/student/:path*", "/admin/:path*"] }
+    // Always allow public paths
+    if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+        return NextResponse.next()
+    }
+
+    // Check maintenance mode via DB — we cannot import lib/settings directly
+    // in Edge middleware, so we call the internal API instead
+    try {
+        const settingsUrl = new URL("/api/admin/settings", request.url)
+        // We use a server-side fetch with the cookie forwarded so the session check passes
+        // But for maintenance mode we use a lightweight cookie-less approach:
+        // maintenance mode is stored as an env-like flag checked via a dedicated lite endpoint
+        const maintenanceUrl = new URL("/api/maintenance-status", request.url)
+        const maintenanceRes = await fetch(maintenanceUrl, {
+            headers: { "x-internal-request": process.env.NEXTAUTH_SECRET || "internal" },
+        })
+
+        if (maintenanceRes.ok) {
+            const { maintenance } = await maintenanceRes.json()
+
+            if (maintenance) {
+                const token = await getToken({ req: request })
+                const isAdmin = token?.role === "ADMIN"
+
+                if (!isAdmin) {
+                    return NextResponse.redirect(new URL("/maintenance", request.url))
+                }
+            }
+        }
+    } catch {
+        // If the maintenance check fails, allow request to proceed (fail open)
+    }
+
+    return NextResponse.next()
+}
+
+export const config = {
+    matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+}

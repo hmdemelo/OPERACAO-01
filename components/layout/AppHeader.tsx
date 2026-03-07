@@ -1,7 +1,8 @@
 "use client"
 
-import { LogOut, PanelLeft, Menu } from "lucide-react"
+import { LogOut, PanelLeft, Menu, Settings } from "lucide-react"
 import { signOut } from "next-auth/react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useSidebar } from "./SidebarContext"
@@ -41,7 +42,8 @@ export function AppHeader({ userName, userRole }: AppHeaderProps) {
                 </Button>
             </div>
 
-            <div className="flex items-center gap-4 ml-auto">
+            <div className="flex items-center gap-3 ml-auto">
+                {/* User name + role */}
                 <div className="flex flex-col items-end hidden md:flex text-sm">
                     <span className="font-medium">{userName || "Usuário"}</span>
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 uppercase">
@@ -52,6 +54,24 @@ export function AppHeader({ userName, userRole }: AppHeaderProps) {
                                 : userRole === "STUDENT" ? "ALUNO" : userRole}
                     </Badge>
                 </div>
+
+                {/* Settings icon — ADMIN only */}
+                {userRole === "ADMIN" && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="text-muted-foreground hover:text-foreground"
+                        title="Configurações do Sistema"
+                    >
+                        <Link href="/admin/settings">
+                            <Settings className="h-5 w-5" />
+                            <span className="sr-only">Configurações</span>
+                        </Link>
+                    </Button>
+                )}
+
+                {/* Logout */}
                 <Button
                     variant="ghost"
                     size="icon"
