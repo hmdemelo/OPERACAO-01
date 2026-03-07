@@ -18,13 +18,35 @@ export async function DELETE(
 
     try {
         const { id } = await params
-        await prisma.user.delete({
-            where: {
-                id,
-            },
+
+        // Security: admin cannot deactivate themselves
+        if (id === session.user.id) {
+            return new NextResponse("Você não pode desativar sua própria conta", { status: 403 })
+        }
+
+        // Security: fetch target user to check role
+        const targetUser = await prisma.user.findUnique({
+            where: { id },
+            select: { role: true, active: true },
         })
 
-        return new NextResponse(null, { status: 204 })
+        if (!targetUser) {
+            return new NextResponse("Usuário não encontrado", { status: 404 })
+        }
+
+        // Security: admin cannot deactivate other admins
+        if (targetUser.role === "ADMIN") {
+            return new NextResponse("Não é possível desativar outro administrador", { status: 403 })
+        }
+
+        // Soft delete: mark as inactive instead of removing
+        const updatedUser = await prisma.user.update({
+            where: { id },
+            data: { active: false },
+            select: { id: true, name: true, active: true },
+        })
+
+        return NextResponse.json(updatedUser)
     } catch (error) {
         logger.error("[USER_DELETE]", error)
         return new NextResponse("Erro Interno", { status: 500 })

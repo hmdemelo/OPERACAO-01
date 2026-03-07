@@ -33,19 +33,24 @@ export async function GET(req: Request) {
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "10")
     const skip = (page - 1) * limit
+    const showInactive = searchParams.get("showInactive") === "true"
 
     try {
         // Mentor: only sees themselves + their own students
         // Admin: sees everyone (admins, mentors, students, orphans)
         const userRole = session.user.role as string
+        const activeFilter = showInactive ? {} : { active: true }
+
         const whereClause = userRole === "MENTOR"
             ? {
+                ...activeFilter,
                 OR: [
                     { id: session.user.id },
                     { studentLink: { mentorId: session.user.id } } as any,
                 ]
             }
             : {
+                ...activeFilter,
                 OR: [
                     { id: session.user.id },
                     { role: "ADMIN" as any },

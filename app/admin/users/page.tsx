@@ -3,6 +3,7 @@
 import { logger } from "@/lib/logger";
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import {
@@ -24,9 +25,9 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-
+import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { Pencil, KeyRound, Search, ArrowUpDown, ArrowUp, ArrowDown, UserPlus } from "lucide-react"
+import { Pencil, KeyRound, Search, ArrowUpDown, ArrowUp, ArrowDown, UserPlus, Trash2 } from "lucide-react"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 
 type User = {
@@ -44,6 +45,7 @@ type User = {
 
 export default function AdminUsersPage() {
     const router = useRouter()
+    const { data: session } = useSession()
     const [users, setUsers] = useState<User[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
@@ -57,9 +59,12 @@ export default function AdminUsersPage() {
     const [passwordResetId, setPasswordResetId] = useState<string | null>(null)
     const [newPassword, setNewPassword] = useState("")
 
+    // Delete State
+    const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
-
-
+    // Filter State
+    const [showInactive, setShowInactive] = useState(false)
 
     // Search and Sort State
     const [searchTerm, setSearchTerm] = useState("")
@@ -68,7 +73,12 @@ export default function AdminUsersPage() {
     const fetchUsers = async () => {
         setIsLoading(true)
         try {
-            const res = await fetch(`/api/admin/users?page=${page}&limit=${limit}`)
+            const params = new URLSearchParams({
+                page: String(page),
+                limit: String(limit),
+                ...(showInactive && { showInactive: "true" }),
+            })
+            const res = await fetch(`/api/admin/users?${params}`)
             if (res.ok) {
                 const result = await res.json()
                 setUsers(result.data)
@@ -84,7 +94,7 @@ export default function AdminUsersPage() {
 
     useEffect(() => {
         fetchUsers()
-    }, [page, limit])
+    }, [page, limit, showInactive])
 
     const handleSort = (key: string) => {
         let direction: 'asc' | 'desc' = 'asc';
@@ -160,6 +170,32 @@ export default function AdminUsersPage() {
         }
     }
 
+    const onDeleteUser = async () => {
+        if (!deleteTargetId) return
+        setIsDeleting(true)
+        try {
+            const res = await fetch(`/api/admin/users/${deleteTargetId}`, {
+                method: "DELETE",
+            })
+
+            if (res.status === 403) {
+                const msg = await res.text()
+                toast.error(msg)
+                return
+            }
+
+            if (!res.ok) throw new Error("Falha ao desativar usuário")
+
+            toast.success("Usuário desativado com sucesso")
+            setDeleteTargetId(null)
+            fetchUsers()
+        } catch (error) {
+            toast.error("Erro ao desativar usuário")
+        } finally {
+            setIsDeleting(false)
+        }
+    }
+
     return (
         <div className="flex flex-col h-[calc(100vh-140px)]">
             {/* Cabecalho Fixo */}
@@ -179,10 +215,26 @@ export default function AdminUsersPage() {
                         </div>
                     </div>
 
-                    <Button onClick={() => router.push("/admin/users/new")} className="gap-2 shadow-sm">
-                        <UserPlus className="h-4 w-4" />
-                        Criar Usuário
-                    </Button>
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Switch
+                                id="show-inactive"
+                                checked={showInactive}
+                                onCheckedChange={(val: boolean) => {
+                                    setShowInactive(val)
+                                    setPage(1)
+                                }}
+                            />
+                            <Label htmlFor="show-inactive" className="cursor-pointer whitespace-nowrap">
+                                Mostrar inativos
+                            </Label>
+                        </div>
+
+                        <Button onClick={() => router.push("/admin/users/new")} className="gap-2 shadow-sm">
+                            <UserPlus className="h-4 w-4" />
+                            Criar Usuário
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -315,6 +367,16 @@ export default function AdminUsersPage() {
                                             >
                                                 <KeyRound className="h-4 w-4" />
                                             </Button>
+                                            {user.id !== session?.user?.id && user.role !== "ADMIN" && user.active && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => setDeleteTargetId(user.id)}
+                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            )}
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -356,6 +418,35 @@ export default function AdminUsersPage() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setPasswordResetId(null)}>Cancelar</Button>
                         <Button onClick={onResetPassword}>Atualizar Senha</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Desativar usuário?</DialogTitle>
+                        <DialogDescription>
+                            O usuário será desativado e não poderá mais acessar o sistema.
+                            Esta ação pode ser revertida editando o usuário.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setDeleteTargetId(null)}
+                            disabled={isDeleting}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={onDeleteUser}
+                            disabled={isDeleting}
+                        >
+                            {isDeleting ? "Desativando..." : "Desativar"}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
