@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Toaster } from "@/components/ui/sonner"
 import { QueryProvider } from "@/components/providers/query-provider"
+import { AuthSessionProvider } from "@/components/providers/session-provider"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,18 +32,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <QueryProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem={false}
-            disableTransitionOnChange
-          >
-            {children}
-            <Toaster />
-            <ThemeToggle />
-          </ThemeProvider>
-        </QueryProvider>
+        <AuthSessionProvider>
+          <QueryProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="dark"
+              enableSystem={false}
+              disableTransitionOnChange
+            >
+              {children}
+              <Toaster />
+              <ThemeToggle />
+            </ThemeProvider>
+          </QueryProvider>
+        </AuthSessionProvider>
       </body>
     </html>
   );
