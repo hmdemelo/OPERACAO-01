@@ -7,10 +7,18 @@ const TIMEZONE = 'America/Araguaina'; // GMT-3 permanente
  * Retorna o início da semana (Domingo) no fuso de Araguaína.
  */
 export function getAraguainaStartOfWeek(date: Date | string): Date {
-    const d = typeof date === 'string' ? parseISO(date.split('T')[0]) : date;
-    const zonedDate = toZonedTime(d, TIMEZONE);
+    // Normaliza para string yyyy-mm-dd para evitar confusão de fuso no parsing inicial
+    const datePart = typeof date === 'string' ? date.split('T')[0] : format(date, 'yyyy-MM-dd');
+
+    // Cria a data diretamente no fuso de Araguaina às 12:00 (meio-dia)
+    // Usar meio-dia evita que qualquer oscilação de fuso (-3, -2, etc) mude o dia
+    const zonedDate = toZonedTime(`${datePart}T12:00:00`, TIMEZONE);
+
     const sunday = startOfWeek(zonedDate, { weekStartsOn: 0 });
-    return sunday;
+    sunday.setHours(0, 0, 0, 0); // Garante início do dia
+
+    // Retorna o equivalente UTC para comparação segura no banco (03:00Z)
+    return fromZonedTime(sunday, TIMEZONE);
 }
 
 /**
