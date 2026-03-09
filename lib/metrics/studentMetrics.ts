@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db"
 import { startOfDay, subDays, endOfDay, startOfWeek, format } from "date-fns"
+import { getAraguainaStartOfWeek } from "@/lib/date-utils"
 
 export async function getWeeklySummary(userId: string) {
     const endDate = endOfDay(new Date())
@@ -156,7 +157,7 @@ export async function getStudyHistory(
         rangeStart = startOfDay(subDays(today, 15))
     } else {
         // Default: Week
-        rangeStart = startOfWeek(today, { weekStartsOn: 1 })
+        rangeStart = getAraguainaStartOfWeek(today)
     }
 
     // Apply date range

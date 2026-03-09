@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/authOptions';
 import { prisma } from '@/lib/db';
-import { startOfWeek, isValid, parseISO } from 'date-fns';
+import { isValid, parseISO } from 'date-fns';
+import { getAraguainaStartOfWeek } from '@/lib/date-utils';
 import { Role } from '@prisma/client';
 
 export async function GET(req: Request) {
@@ -17,12 +18,12 @@ export async function GET(req: Request) {
     const dateParam = searchParams.get('weekStart');
 
     // Default to current week start if not provided
-    let weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
+    let weekStart = getAraguainaStartOfWeek(new Date());
 
     if (dateParam) {
         const parsed = parseISO(dateParam);
         if (isValid(parsed)) {
-            weekStart = startOfWeek(parsed, { weekStartsOn: 0 });
+            weekStart = getAraguainaStartOfWeek(parsed);
         }
     }
 

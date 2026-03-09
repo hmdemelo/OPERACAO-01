@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db"
 import { startOfWeek, endOfWeek, subDays, subWeeks, startOfDay, endOfDay, format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { getAraguainaStartOfWeek } from "@/lib/date-utils"
 
 export type StudentPerformance = {
     id: string
@@ -30,7 +31,7 @@ export async function getStudentPerformance(period: PeriodType = 'week', mentorI
     } else if (period === 'all') {
         startDate = new Date(0) // 1970-01-01
     } else {
-        startDate = startOfWeek(new Date(), { weekStartsOn: 1 })
+        startDate = getAraguainaStartOfWeek(new Date())
     }
 
     // 1. Fetch students (filtered by mentor if provided)
@@ -197,7 +198,7 @@ export async function getSubjectDistributionAll(
     } else if (period === 'all') {
         startDate = new Date(0)
     } else {
-        startDate = startOfWeek(new Date(), { weekStartsOn: 1 })
+        startDate = getAraguainaStartOfWeek(new Date())
     }
 
     // Filter by mentor's students if needed
@@ -268,8 +269,8 @@ export async function getWeeklyEvolution(
     }
 
     for (let i = 3; i >= 0; i--) {
-        const weekStart = startOfWeek(subWeeks(now, i), { weekStartsOn: 1 })
-        const weekEnd = endOfDay(i === 0 ? now : endOfWeek(subWeeks(now, i), { weekStartsOn: 1 }))
+        const weekStart = getAraguainaStartOfWeek(subWeeks(now, i))
+        const weekEnd = endOfDay(i === 0 ? now : endOfWeek(subWeeks(now, i), { weekStartsOn: 0 }))
 
         const agg = await prisma.studyLog.aggregate({
             where: {
@@ -320,7 +321,7 @@ export type ScheduleAdherenceSummary = {
 export async function getScheduleAdherence(
     mentorId?: string
 ): Promise<ScheduleAdherenceSummary> {
-    const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 })
+    const weekStart = getAraguainaStartOfWeek(new Date())
 
     const studentWhere: any = { role: "STUDENT", active: true }
     if (mentorId) {

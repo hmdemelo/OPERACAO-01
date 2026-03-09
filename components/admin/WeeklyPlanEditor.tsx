@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea"; // Added
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Loader2, Plus, X, Copy, ClipboardPaste } from "lucide-react";
+import { getAraguainaStartOfWeek, parseFromDatabase } from "@/lib/date-utils";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -49,7 +50,7 @@ interface WeeklyPlanEditorProps {
 }
 
 export function WeeklyPlanEditor({ userId, subjects, studentName, userExams = [] }: WeeklyPlanEditorProps) {
-    const [selectedDate, setSelectedDate] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 0 }));
+    const [selectedDate, setSelectedDate] = useState<Date>(getAraguainaStartOfWeek(new Date()));
     const [planItems, setPlanItems] = useState<PlanItem[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -202,7 +203,7 @@ export function WeeklyPlanEditor({ userId, subjects, studentName, userExams = []
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     userId,
-                    startDate: selectedDate.toISOString(),
+                    startDate: selectedDate.toISOString(), // ISO stays consistent with z-offset
                     items: validItems,
                 }),
             });

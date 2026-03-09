@@ -48,3 +48,4 @@ next-env.d.ts
 # temp files
 replace_logs.py
 HOMEPAGE_AUDIT.md
+.env*.local

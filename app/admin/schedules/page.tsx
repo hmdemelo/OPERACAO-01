@@ -28,6 +28,7 @@ import {
 import Link from "next/link"
 import { format, startOfWeek, addWeeks, subWeeks, endOfWeek } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { getAraguainaStartOfWeek } from "@/lib/date-utils"
 
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { SubjectLinkModal } from "@/components/admin/SubjectLinkModal"
@@ -45,7 +46,7 @@ type PlanOverviewItem = {
 }
 
 export default function AdminOverviewPage() {
-    const [weekStart, setWeekStart] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 0 }))
+    const [weekStart, setWeekStart] = useState<Date>(getAraguainaStartOfWeek(new Date()))
     const [data, setData] = useState<PlanOverviewItem[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [filterStatus, setFilterStatus] = useState<string>("ALL")

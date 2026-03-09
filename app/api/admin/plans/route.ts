@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/authOptions';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
-import { startOfWeek } from 'date-fns';
+import { getAraguainaStartOfWeek } from '@/lib/date-utils';
 
 const planSchema = z.object({
     userId: z.string(),
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { userId, startDate, items } = planSchema.parse(body);
 
-        const weekStart = startOfWeek(new Date(startDate), { weekStartsOn: 0 });
+        const weekStart = getAraguainaStartOfWeek(startDate);
 
         // Upsert Plan
         // Prisma requires explicit null for optional fields in create/update if they are undefined in the object
@@ -95,7 +95,7 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: 'Missing userId or date' }, { status: 400 });
     }
 
-    const weekStart = startOfWeek(new Date(dateStr), { weekStartsOn: 0 });
+    const weekStart = getAraguainaStartOfWeek(dateStr);
 
     const plan = await prisma.weeklyPlan.findUnique({
         where: {

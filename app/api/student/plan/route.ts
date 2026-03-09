@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/authOptions';
 import { prisma } from '@/lib/db';
-import { startOfWeek } from 'date-fns';
+import { getAraguainaStartOfWeek } from '@/lib/date-utils';
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     const dateParam = searchParams.get('date');
     const targetDate = dateParam ? new Date(dateParam) : new Date();
 
-    const weekStart = startOfWeek(targetDate, { weekStartsOn: 0 }); // Consistency with Admin API
+    const weekStart = getAraguainaStartOfWeek(targetDate); // Consistency with Araguaina Timezone
 
     const plan = await prisma.weeklyPlan.findUnique({
         where: {

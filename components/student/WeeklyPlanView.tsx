@@ -8,6 +8,7 @@ import { CheckCircle2, Circle, Loader2, Calendar, ChevronLeft, ChevronRight } fr
 import { toast } from 'sonner'
 import { QuestionsInputModal } from './QuestionsInputModal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getAraguainaStartOfWeek, parseFromDatabase } from '@/lib/date-utils'
 
 interface PlanItem {
     id: string;
@@ -60,7 +61,7 @@ export default function WeeklyPlanView() {
     const [selectedItem, setSelectedItem] = useState<PlanItem | null>(null)
     const [currentDate, setCurrentDate] = useState(() => new Date())
 
-    const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
+    const weekStart = getAraguainaStartOfWeek(currentDate)
     const weekEnd = addDays(weekStart, 6)
 
     const goToPreviousWeek = () => setCurrentDate(prev => subWeeks(prev, 1))
@@ -187,7 +188,7 @@ export default function WeeklyPlanView() {
         )
     }
 
-    const startDate = new Date(plan.startDate)
+    const startDate = parseFromDatabase(plan.startDate)
     const totalItems = plan.items.length
     const completedItems = plan.items.filter(i => i.completed).length
     const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0
