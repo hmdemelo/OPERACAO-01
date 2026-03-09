@@ -3,8 +3,7 @@ import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 
 // Routes that are always accessible regardless of maintenance mode
-const PUBLIC_PATHS = ["/signin", "/maintenance", "/api/auth"]
-const ADMIN_PATHS = ["/admin"]
+const PUBLIC_PATHS = ["/signin", "/maintenance", "/api/auth", "/api/maintenance-status"]
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
@@ -23,32 +22,21 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next()
     }
 
-    // Check maintenance mode via DB — we cannot import lib/settings directly
-    // in Edge middleware, so we call the internal API instead
-    try {
-        const settingsUrl = new URL("/api/admin/settings", request.url)
-        // We use a server-side fetch with the cookie forwarded so the session check passes
-        // But for maintenance mode we use a lightweight cookie-less approach:
-        // maintenance mode is stored as an env-like flag checked via a dedicated lite endpoint
-        const maintenanceUrl = new URL("/api/maintenance-status", request.url)
-        const maintenanceRes = await fetch(maintenanceUrl, {
-            headers: { "x-internal-request": process.env.NEXTAUTH_SECRET || "internal" },
-        })
+    // Check maintenance mode via env var — no HTTP fetch, zero overhead
+    const maintenance = process.env.MAINTENANCE_MODE === "true"
 
-        if (maintenanceRes.ok) {
-            const { maintenance } = await maintenanceRes.json()
+    if (maintenance) {
+        try {
+            const token = await getToken({ req: request })
+            const isAdmin = token?.role === "ADMIN"
 
-            if (maintenance) {
-                const token = await getToken({ req: request })
-                const isAdmin = token?.role === "ADMIN"
-
-                if (!isAdmin) {
-                    return NextResponse.redirect(new URL("/maintenance", request.url))
-                }
+            if (!isAdmin) {
+                return NextResponse.redirect(new URL("/maintenance", request.url))
             }
+        } catch {
+            // If token check fails, redirect to maintenance (fail safe)
+            return NextResponse.redirect(new URL("/maintenance", request.url))
         }
-    } catch {
-        // If the maintenance check fails, allow request to proceed (fail open)
     }
 
     return NextResponse.next()
