@@ -2,8 +2,8 @@ import { unstable_cache } from "next/cache"
 import * as adminMetrics from "./adminMetrics"
 
 // Cache durations (in seconds)
-const CACHE_5_MIN = 300
-const CACHE_10_MIN = 600
+const CACHE_5_MIN = 3600 // 1 hora
+const CACHE_10_MIN = 7200 // 2 horas
 
 /**
  * Cached version of getDashboardSummary

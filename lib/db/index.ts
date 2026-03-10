@@ -8,5 +8,5 @@ export const prisma =
     log: process.env.NODE_ENV === "production" ? ["error"] : ["query"],
   })
 
-// Always cache the instance — critical for connection reuse in production
+// Always cache the instance — critical for connection reuse in production (Serverless)
 globalForPrisma.prisma = prisma
