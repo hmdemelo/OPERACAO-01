@@ -50,6 +50,7 @@ function AlertGroup({
                     <Link
                         key={s.id}
                         href={`/admin/users/${s.id}`}
+                        prefetch={false}
                         className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border bg-background/80 hover:bg-background transition-colors ${textColor} font-medium`}
                     >
                         {s.name}

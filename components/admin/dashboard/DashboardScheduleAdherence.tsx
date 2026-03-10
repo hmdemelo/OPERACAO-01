@@ -114,6 +114,7 @@ export function DashboardScheduleAdherence({
                         <div key={student.id} className="flex items-center gap-3">
                             <Link
                                 href={`/admin/users/${student.id}`}
+                                prefetch={false}
                                 className="text-sm font-medium w-36 truncate hover:underline"
                                 title={student.name}
                             >
