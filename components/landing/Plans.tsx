@@ -17,34 +17,22 @@ type Plan = {
     highlighted: boolean
 }
 
-export const Plans = () => {
-    const [plans, setPlans] = useState<Plan[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+interface PlansProps {
+    plans: any[];
+    whatsappNumber: string;
+    whatsappMessage: string;
+}
 
-    useEffect(() => {
-        const fetchPlans = async () => {
-            try {
-                const res = await fetch('/api/admin/landing/plans')
-                if (res.ok) {
-                    const data = await res.json()
-                    setPlans(data.filter((p: any) => p.active !== false)) // Filter active only just in case API returns all
-                }
-            } catch (error) {
-                logger.error("Failed to fetch plans", error)
-            } finally {
-                setIsLoading(false)
-            }
-        }
-        fetchPlans()
-    }, [])
-
-    const handleWhatsAppRedirect = (message: string) => {
-        const link = generateWhatsAppLink(message);
+export const Plans = ({ plans, whatsappNumber, whatsappMessage }: PlansProps) => {
+    const handleWhatsAppRedirect = (planMessage?: string) => {
+        const message = planMessage || whatsappMessage;
+        // Se whatsappNumber for apenas dígitos, garante o prefixo 55 se necessário
+        const cleanNumber = whatsappNumber.replace(/\D/g, '');
+        const link = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
         window.open(link, '_blank');
     };
 
-    if (isLoading) return <div className="py-32 text-center text-white">Carregando planos...</div>
-    if (plans.length === 0) return null
+    if (plans.length === 0) return null;
 
     return (
         <section id="planos" className="py-32 px-6 relative">
@@ -94,7 +82,7 @@ export const Plans = () => {
                             </div>
 
                             <div className="flex-1 space-y-5">
-                                {plan.features.map((item, i) => (
+                                {plan.features.map((item: string, i: number) => (
                                     <div key={i} className={`flex items-center gap-3 text-xs ${plan.highlighted ? "font-black text-slate-200" : "font-bold text-slate-400"} uppercase tracking-tight`}>
                                         {plan.highlighted
                                             ? <Zap size={16} className="text-orange-500 shrink-0" fill="currentColor" />

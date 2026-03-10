@@ -1,7 +1,12 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/authOptions"
 import { redirect } from "next/navigation"
-import { getDashboardSummary, getSubjectDistributionAll, getWeeklyEvolution, getScheduleAdherence } from "@/lib/metrics/adminMetrics"
+import {
+    getCachedDashboardSummary,
+    getCachedSubjectDistributionAll,
+    getCachedWeeklyEvolution,
+    getCachedScheduleAdherence
+} from "@/lib/metrics/cachedAdminMetrics"
 import {
     Table,
     TableBody,
@@ -47,10 +52,10 @@ export default async function AdminDashboardPage({
     const userRole = session.user.role as string
     const mentorId = userRole === "MENTOR" ? session.user.id : undefined
     const [summary, subjectDistribution, weeklyEvolution, scheduleAdherence] = await Promise.all([
-        getDashboardSummary(period, mentorId),
-        getSubjectDistributionAll(period, mentorId),
-        getWeeklyEvolution(mentorId),
-        getScheduleAdherence(mentorId),
+        getCachedDashboardSummary(period, mentorId),
+        getCachedSubjectDistributionAll(period, mentorId),
+        getCachedWeeklyEvolution(mentorId),
+        getCachedScheduleAdherence(mentorId),
     ])
     const dashboardTitle = userRole === "MENTOR" ? "Meus Alunos" : "Visão Geral Admin"
 

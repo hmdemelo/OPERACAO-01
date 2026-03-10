@@ -1,7 +1,7 @@
 import { LayoutDashboard, Users, User, BookOpen, Trophy, Image, Calendar, Megaphone } from "lucide-react"
 
 export const adminItems = [
-    { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, prefetch: false },
     { label: "Usuários", href: "/admin/users", icon: Users },
     { label: "Matérias", href: "/admin/subjects", icon: BookOpen },
     { label: "Cronograma", href: "/admin/schedules", icon: Calendar },

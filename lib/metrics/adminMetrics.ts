@@ -268,30 +268,40 @@ export async function getWeeklyEvolution(
         userFilter.userId = { in: studentIds.map(s => s.studentId) }
     }
 
+    // Consolidated start and end dates for the 4-week period
+    const fourWeeksAgoStart = getAraguainaStartOfWeek(subWeeks(now, 3))
+    const currentEnd = endOfDay(now)
+
+    // Single query for all logs in the period
+    const allLogs = await prisma.studyLog.findMany({
+        where: {
+            date: { gte: fourWeeksAgoStart, lte: currentEnd },
+            ...userFilter,
+        },
+        select: {
+            date: true,
+            hoursStudied: true,
+            questionsAnswered: true,
+            correctAnswers: true,
+        },
+    })
+
+    // Process logs into weeks locally
     for (let i = 3; i >= 0; i--) {
         const weekStart = getAraguainaStartOfWeek(subWeeks(now, i))
         const weekEnd = endOfDay(i === 0 ? now : endOfWeek(subWeeks(now, i), { weekStartsOn: 0 }))
 
-        const agg = await prisma.studyLog.aggregate({
-            where: {
-                date: { gte: weekStart, lte: weekEnd },
-                ...userFilter,
-            },
-            _sum: {
-                hoursStudied: true,
-                questionsAnswered: true,
-                correctAnswers: true,
-            },
-        })
+        const weekLogs = allLogs.filter(log => log.date >= weekStart && log.date <= weekEnd)
 
-        const totalQ = agg._sum.questionsAnswered || 0
-        const totalC = agg._sum.correctAnswers || 0
+        const totalHours = weekLogs.reduce((sum, log) => sum + (log.hoursStudied || 0), 0)
+        const totalQ = weekLogs.reduce((sum, log) => sum + (log.questionsAnswered || 0), 0)
+        const totalC = weekLogs.reduce((sum, log) => sum + (log.correctAnswers || 0), 0)
 
         weeks.push({
             week: format(weekStart, "dd/MM", { locale: ptBR }),
             avgAccuracy: totalQ > 0 ? Number(((totalC / totalQ) * 100).toFixed(1)) : 0,
             totalQuestions: totalQ,
-            totalHours: Number((agg._sum.hoursStudied || 0).toFixed(1)),
+            totalHours: Number(totalHours.toFixed(1)),
         })
     }
 

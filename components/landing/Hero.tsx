@@ -4,7 +4,15 @@ import React from 'react';
 import { Zap } from 'lucide-react';
 import { Logo } from './Logo';
 
-export const Hero = () => {
+interface HeroProps {
+    config: {
+        heroTitle: string;
+        heroSubtitle: string;
+        heroVideoUrl: string;
+    };
+}
+
+export const Hero = ({ config }: HeroProps) => {
     return (
         <section className="pt-40 pb-20 px-6">
             <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
@@ -13,11 +21,11 @@ export const Hero = () => {
                         <Zap size={14} fill="currentColor" />
                         Sua aprovação é nossa única missão
                     </div>
-                    <h1 className="text-6xl lg:text-8xl font-black text-white leading-[0.9] tracking-tighter uppercase">
-                        Domine o <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">Campo de Batalha</span>
+                    <h1 className="text-6xl lg:text-8xl font-black text-white leading-[0.9] tracking-tighter uppercase whitespace-pre-line">
+                        {config.heroTitle}
                     </h1>
                     <p className="text-slate-400 text-lg font-medium max-w-lg leading-relaxed">
-                        Pare de estudar sem estratégia. A Operação 01 é o centro de inteligência que transforma esforço em aprovação através de dados e disciplina de elite.
+                        {config.heroSubtitle}
                     </p>
                     <div className="flex flex-wrap gap-4 pt-4">
                         <button
