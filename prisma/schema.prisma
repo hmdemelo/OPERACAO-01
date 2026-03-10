@@ -224,3 +224,17 @@ model SystemSettings {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+model ChangelogEntry {
+  id        String   @id @default(cuid())
+  version   String   // ex: "v1.4.0"
+  date      DateTime @default(now())
+  title     String
+  content   String   @db.Text
+  category  String   // "NEW", "IMPROVEMENT", "FIX"
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}

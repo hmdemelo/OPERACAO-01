@@ -1,46 +1,18 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/authOptions"
 import { redirect } from "next/navigation"
-import fs from "fs"
-import path from "path"
+import { prisma } from "@/lib/db"
+import { ChangelogForm } from "@/components/admin/changelog/ChangelogForm"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 
-// Simple markdown parser for the changelog
-function parseChangelog(markdown: string) {
-    const sections: { version: string; date: string; groups: { title: string; icon: string; items: string[] }[] }[] = []
-    let currentSection: typeof sections[number] | null = null
-    let currentGroup: { title: string; icon: string; items: string[] } | null = null
-
-    const lines = markdown.split("\n")
-
-    for (const line of lines) {
-        // Version header: ## 🚀 v1.3.0 — 01/03/2025
-        const versionMatch = line.match(/^## .+ (v[\d.]+)\s*—\s*(.+)$/)
-        if (versionMatch) {
-            currentSection = { version: versionMatch[1], date: versionMatch[2].trim(), groups: [] }
-            sections.push(currentSection)
-            currentGroup = null
-            continue
-        }
-
-        // Group header: ### ✨ Novidades
-        const groupMatch = line.match(/^### (.+)$/)
-        if (groupMatch && currentSection) {
-            const title = groupMatch[1].replace(/^[^\w]+/, "").trim()
-            const icon = groupMatch[1].match(/^([^\w\s]+)/)?.[1] || "📌"
-            currentGroup = { title, icon: icon.trim(), items: [] }
-            currentSection.groups.push(currentGroup)
-            continue
-        }
-
-        // Item: - **Feature** — Description
-        const itemMatch = line.match(/^- (.+)$/)
-        if (itemMatch && currentGroup) {
-            currentGroup.items.push(itemMatch[1])
-            continue
-        }
+function getCategoryStyles(category: string) {
+    switch (category) {
+        case 'NEW': return { icon: '✨', label: 'Novidades', color: 'text-primary' }
+        case 'IMPROVEMENT': return { icon: '⚙️', label: 'Melhorias', color: 'text-blue-500' }
+        case 'FIX': return { icon: '🐛', label: 'Correções', color: 'text-orange-500' }
+        default: return { icon: '📌', label: 'Geral', color: 'text-muted-foreground' }
     }
-
-    return sections
 }
 
 export default async function ChangelogPage() {
@@ -50,16 +22,21 @@ export default async function ChangelogPage() {
         redirect("/signin")
     }
 
-    const changelogPath = path.join(process.cwd(), "CHANGELOG.md")
-    let rawContent = ""
+    const entries = await prisma.changelogEntry.findMany({
+        where: { published: true },
+        orderBy: { createdAt: 'desc' }
+    })
 
-    try {
-        rawContent = fs.readFileSync(changelogPath, "utf-8")
-    } catch {
-        rawContent = "## Sem atualizações\n\nNenhuma atualização disponível no momento."
-    }
+    // Group entries by version
+    const groupedEntries: Record<string, typeof entries> = {}
+    entries.forEach(entry => {
+        if (!groupedEntries[entry.version]) {
+            groupedEntries[entry.version] = []
+        }
+        groupedEntries[entry.version].push(entry)
+    })
 
-    const sections = parseChangelog(rawContent)
+    const versions = Object.keys(groupedEntries)
 
     return (
         <div className="container mx-auto p-6 max-w-3xl">
@@ -68,46 +45,52 @@ export default async function ChangelogPage() {
                 <p className="text-muted-foreground mt-1">Novidades, correções e melhorias da plataforma</p>
             </div>
 
+            {session.user.role === "ADMIN" && <ChangelogForm />}
+
             <div className="relative">
-                {/* Timeline line */}
                 <div className="absolute left-[11px] top-2 bottom-0 w-px bg-border" />
 
                 <div className="space-y-10">
-                    {sections.map((section, idx) => (
-                        <div key={idx} className="relative pl-10">
-                            {/* Timeline dot */}
+                    {versions.length === 0 ? (
+                        <div className="pl-10 text-muted-foreground italic">
+                            Nenhuma atualização publicada ainda.
+                        </div>
+                    ) : versions.map((version) => (
+                        <div key={version} className="relative pl-10">
                             <div className="absolute left-0 top-1 w-[23px] h-[23px] rounded-full bg-primary flex items-center justify-center">
                                 <span className="text-[10px] text-primary-foreground font-bold">🚀</span>
                             </div>
 
-                            {/* Version header */}
                             <div className="flex items-baseline gap-3 mb-4">
-                                <span className="text-xl font-bold">{section.version}</span>
-                                <span className="text-sm text-muted-foreground">{section.date}</span>
+                                <span className="text-xl font-bold">{version}</span>
+                                <span className="text-sm text-muted-foreground">
+                                    {format(groupedEntries[version][0].date, "dd 'de' MMMM, yyyy", { locale: ptBR })}
+                                </span>
                             </div>
 
-                            {/* Groups */}
                             <div className="space-y-4">
-                                {section.groups.map((group, gIdx) => (
-                                    <div key={gIdx} className="border rounded-lg p-4 bg-card">
-                                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                                            {group.icon} {group.title}
-                                        </h3>
-                                        <ul className="space-y-2">
-                                            {group.items.map((item, iIdx) => (
-                                                <li
-                                                    key={iIdx}
-                                                    className="text-sm leading-relaxed"
-                                                    dangerouslySetInnerHTML={{
-                                                        __html: item
-                                                            .replace(/\*\*(.+?)\*\*/g, '<strong class="text-foreground">$1</strong>')
-                                                            .replace(/—/g, '<span class="text-muted-foreground mx-1">—</span>')
-                                                    }}
-                                                />
-                                            ))}
-                                        </ul>
-                                    </div>
-                                ))}
+                                {groupedEntries[version].map((entry) => {
+                                    const { icon, label } = getCategoryStyles(entry.category)
+                                    return (
+                                        <div key={entry.id} className="border rounded-lg p-4 bg-card">
+                                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
+                                                <span>{icon}</span> {entry.title}
+                                                <span className="text-[10px] font-normal lowercase bg-muted px-1.5 py-0.5 rounded ml-auto">
+                                                    {label}
+                                                </span>
+                                            </h3>
+                                            <div
+                                                className="text-sm leading-relaxed space-y-1"
+                                                dangerouslySetInnerHTML={{
+                                                    __html: entry.content
+                                                        .replace(/\n/g, '<br/>')
+                                                        .replace(/\*\*(.+?)\*\*/g, '<strong class="text-foreground">$1</strong>')
+                                                        .replace(/—/g, '<span class="text-muted-foreground mx-1">—</span>')
+                                                }}
+                                            />
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </div>
                     ))}
