@@ -45,7 +45,6 @@ export async function POST(req: Request) {
         // Invalida os caches das páginas que usam o changelog
         revalidatePath("/admin/changelog")
         revalidatePath("/student/dashboard") // Onde pode haver badges de novidade
-        revalidateTag("changelog")
 
         return NextResponse.json(entry)
     } catch (error) {
