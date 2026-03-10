@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { QuestionsInputModal } from './QuestionsInputModal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAraguainaStartOfWeek, parseFromDatabase } from '@/lib/date-utils'
+import { useStudentStore } from '@/store/useStudentStore'
 
 interface PlanItem {
     id: string;
@@ -57,6 +58,7 @@ const fetchWeeklyPlan = async (date: Date): Promise<WeeklyPlan | null> => {
 
 export default function WeeklyPlanView() {
     const queryClient = useQueryClient()
+    const invalidateDashboard = useStudentStore(state => state.invalidateDashboard)
     const [modalOpen, setModalOpen] = useState(false)
     const [selectedItem, setSelectedItem] = useState<PlanItem | null>(null)
     const [currentDate, setCurrentDate] = useState(() => new Date())
@@ -116,6 +118,7 @@ export default function WeeklyPlanView() {
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['weeklyPlan'] })
+            invalidateDashboard() // Force dashboard to refresh next time it's opened
         }
     })
 

@@ -29,10 +29,12 @@ export default async function StudentDashboardPage() {
     return (
         <div className="container mx-auto p-6">
             <DashboardContainer
-                weeklySummary={weeklySummary}
-                dailyProgress={dailyProgress}
-                subjectDistribution={subjectDistribution}
-                fullHistory={historyData.data}
+                initialData={{
+                    weeklySummary,
+                    dailyProgress,
+                    subjectDistribution,
+                    fullHistory: historyData.data
+                }}
             />
         </div>
     )
