@@ -5,16 +5,18 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sparkles, Settings, Bug, Plus, Loader2 } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
+import { toast } from "sonner"
 
 export function ChangelogForm() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
+    const [isOpen, setIsOpen] = useState(false)
     const [formData, setFormData] = useState({
-        version: "",
+        version: "v1.5",
         title: "",
         content: "",
         category: "NEW"
@@ -32,32 +34,43 @@ export function ChangelogForm() {
             })
 
             if (res.ok) {
-                setFormData({ version: "", title: "", content: "", category: "NEW" })
+                setFormData({ version: "v1.5", title: "", content: "", category: "NEW" })
+                setIsOpen(false)
+                toast.success("Atualização publicada com sucesso!")
                 router.refresh()
+            } else {
+                toast.error("Erro ao publicar atualização.")
             }
         } catch (error) {
             console.error("Error creating changelog:", error)
+            toast.error("Falha na conexão.")
         } finally {
             setIsLoading(false)
         }
     }
 
     return (
-        <Card className="mb-8">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Plus className="h-5 w-5 text-primary" />
-                    Publicar Nova Atualização
-                </CardTitle>
-            </CardHeader>
-            <form onSubmit={handleSubmit}>
-                <CardContent className="space-y-4">
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Nova Atualização
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                    <DialogTitle>Publicar Nova Atualização</DialogTitle>
+                    <DialogDescription>
+                        Preencha os detalhes da nova versão para exibir no mural.
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-6 mt-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="version">Versão</Label>
                             <Input
                                 id="version"
-                                placeholder="ex: v1.4.0"
+                                placeholder="ex: v1.5"
                                 value={formData.version}
                                 onChange={(e) => setFormData({ ...formData, version: e.target.value })}
                                 required
@@ -109,26 +122,30 @@ export function ChangelogForm() {
                         <Textarea
                             id="content"
                             placeholder="- **Recurso X** — Descrição detalhada"
-                            rows={4}
+                            rows={6}
                             value={formData.content}
                             onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                             required
                         />
                     </div>
-                </CardContent>
-                <CardFooter>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Publicando...
-                            </>
-                        ) : (
-                            "Publicar no Mural"
-                        )}
-                    </Button>
-                </CardFooter>
-            </form>
-        </Card>
+
+                    <div className="flex justify-end pt-4">
+                        <Button type="button" variant="outline" className="mr-2" onClick={() => setIsOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" disabled={isLoading}>
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Publicando...
+                                </>
+                            ) : (
+                                "Publicar no Mural"
+                            )}
+                        </Button>
+                    </div>
+                </form>
+            </DialogContent>
+        </Dialog>
     )
 }

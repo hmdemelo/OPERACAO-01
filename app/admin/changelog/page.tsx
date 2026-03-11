@@ -39,13 +39,14 @@ export default async function ChangelogPage() {
     const versions = Object.keys(groupedEntries)
 
     return (
-        <div className="container mx-auto p-6 max-w-3xl">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold tracking-tight">Mural de Atualizações</h1>
-                <p className="text-muted-foreground mt-1">Novidades, correções e melhorias da plataforma</p>
+        <div className="container mx-auto p-6 max-w-4xl">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Mural de Atualizações</h1>
+                    <p className="text-muted-foreground mt-1">Novidades, correções e melhorias da plataforma</p>
+                </div>
+                {session.user.role === "ADMIN" && <ChangelogForm />}
             </div>
-
-            {session.user.role === "ADMIN" && <ChangelogForm />}
 
             <div className="relative">
                 <div className="absolute left-[11px] top-2 bottom-0 w-px bg-border" />
