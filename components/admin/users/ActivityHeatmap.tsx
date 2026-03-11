@@ -1,3 +1,4 @@
+import React, { Fragment } from "react"
 import {
     Tooltip,
     TooltipContent,
@@ -55,25 +56,31 @@ export function ActivityHeatmap({
             <div className="flex pb-2">
                 <TooltipProvider>
                     <div className="flex flex-wrap gap-1 w-full">
-                        {dates.map((date) => {
+                        {dates.map((date, index) => {
                             const dData = getDataForDate(date)
                             const hours = dData?.totalHours || 0
+                            const isMonday = date.getDay() === 1
                             return (
-                                <Tooltip key={date.toISOString()}>
-                                    <TooltipTrigger asChild>
-                                        <div
-                                            className={`${compact ? 'w-2 h-2 rounded-[1px]' : 'w-3 h-3 rounded-sm'} ${getColor(hours)} cursor-pointer hover:ring-2 hover:ring-ring hover:ring-offset-1`}
-                                            onClick={() => onSquareClick?.(date.toISOString().split('T')[0])}
-                                        />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <div className="text-xs">
-                                            <p className="font-bold">{date.toLocaleDateString()}</p>
-                                            <p>{hours.toFixed(1)} horas</p>
-                                            {dData?.logCount ? <p>{dData.logCount} registros</p> : null}
-                                        </div>
-                                    </TooltipContent>
-                                </Tooltip>
+                                <Fragment key={date.toISOString()}>
+                                    {isMonday && index !== 0 && (
+                                        <div className={`w-[2px] bg-orange-500 rounded-full mx-[1px] ${compact ? 'h-2' : 'h-3'}`} />
+                                    )}
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div
+                                                className={`${compact ? 'w-2 h-2 rounded-[1px]' : 'w-3 h-3 rounded-sm'} ${getColor(hours)} cursor-pointer hover:ring-2 hover:ring-ring hover:ring-offset-1`}
+                                                onClick={() => onSquareClick?.(date.toISOString().split('T')[0])}
+                                            />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <div className="text-xs">
+                                                <p className="font-bold">{date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
+                                                <p>{hours.toFixed(1)} horas</p>
+                                                {dData?.logCount ? <p>{dData.logCount} registros</p> : null}
+                                            </div>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </Fragment>
                             )
                         })}
                     </div>
