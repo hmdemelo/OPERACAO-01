@@ -53,13 +53,21 @@ export const authOptions: NextAuthOptions = {
     ],
     session: {
         strategy: "jwt",
+        maxAge: 1 * 60 * 60, // 1 hora de inatividade absoluta
+        updateAge: 0, // Atualiza o cronômetro em cada requisição para máxima precisão
     },
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, trigger, session }) {
             if (user) {
                 token.id = user.id
                 token.role = user.role
             }
+
+            // Se o admin atualizar o perfil, podemos forçar o update aqui futuramente
+            if (trigger === "update" && session?.role) {
+                token.role = session.role
+            }
+
             return token
         },
         async session({ session, token }) {
