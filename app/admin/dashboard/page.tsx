@@ -24,6 +24,8 @@ import { DashboardScheduleAdherence } from "@/components/admin/dashboard/Dashboa
 import Link from "next/link"
 import { ArrowUpDown } from "lucide-react"
 import { DashboardPagination } from "@/components/admin/dashboard/DashboardPagination"
+import { DashboardSyncButton } from "@/components/admin/dashboard/DashboardSyncButton"
+
 
 export default async function AdminDashboardPage({
     searchParams,
@@ -101,7 +103,10 @@ export default async function AdminDashboardPage({
         <div className="container mx-auto p-6 space-y-6">
             {/* Header with Title + Period Filter */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h1 className="text-3xl font-bold">{dashboardTitle}</h1>
+                <div className="flex items-center gap-4">
+                    <h1 className="text-3xl font-bold">{dashboardTitle}</h1>
+                    <DashboardSyncButton />
+                </div>
                 <div className="flex bg-muted rounded-lg p-1">
                     <Link href={getPeriodLink('week')} prefetch={false} className={`px-4 py-1.5 text-sm rounded-md transition-all ${period === 'week' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground hover:text-foreground'}`}>Semana</Link>
                     <Link href={getPeriodLink('fortnight')} prefetch={false} className={`px-4 py-1.5 text-sm rounded-md transition-all ${period === 'fortnight' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground hover:text-foreground'}`}>Quinzena</Link>
