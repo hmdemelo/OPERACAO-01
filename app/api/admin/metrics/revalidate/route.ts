@@ -13,7 +13,7 @@ export async function POST() {
 
     try {
         // Drop the 1-hour cache strictly for admin dashboard metrics
-        revalidateTag("admin-metrics")
+        revalidateTag("admin-metrics", "max")
 
         logger.info(`Admin metrics cache manually revalidated by ${session.user.email || session.user.id}`)
 
