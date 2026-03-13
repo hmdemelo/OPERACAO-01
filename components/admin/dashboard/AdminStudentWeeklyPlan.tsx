@@ -159,7 +159,7 @@ export function AdminStudentWeeklyPlan({ userId, selectedDate }: { userId: strin
                                 {dayItems.map((item: PlanItem) => (
                                     <div
                                         key={item.id}
-                                        className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${item.completed
+                                        className={`flex items-start gap-4 p-4 rounded-lg border transition-colors relative ${item.completed
                                             ? 'bg-secondary/50 border-border'
                                             : 'bg-card border-l-4 border-l-primary/50'
                                             }`}
@@ -172,26 +172,28 @@ export function AdminStudentWeeklyPlan({ userId, selectedDate }: { userId: strin
                                             )}
                                         </div>
 
-                                        <div className="flex-1 space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                {item.subject ? (
-                                                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded uppercase tracking-wide">
-                                                        {item.subject.name}
+                                        <div className="flex-1 space-y-1 min-w-0">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2 overflow-hidden">
+                                                    {item.subject ? (
+                                                        <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded uppercase tracking-wide truncate">
+                                                            {item.subject.name}
+                                                        </span>
+                                                    ) : null}
+                                                    <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">Bloco {item.blockIndex}</span>
+                                                </div>
+                                                {item.durationMinutes && (
+                                                    <span className="text-xs text-primary/80 font-medium flex items-center gap-1 whitespace-nowrap">
+                                                        ⏳ {item.durationMinutes} min
                                                     </span>
-                                                ) : null}
-                                                <span className="text-xs text-muted-foreground font-medium">Bloco {item.blockIndex}</span>
+                                                )}
                                             </div>
                                             <p className={`text-sm ${item.completed ? 'text-muted-foreground line-through' : 'text-card-foreground'}`}>
                                                 {item.content || "Sem descrição"}
                                             </p>
                                             {item.notes && (
-                                                <p className="text-xs text-amber-600 dark:text-amber-500 mt-1 italic font-medium line-clamp-2">
+                                                <p className="text-xs text-amber-600 dark:text-amber-500 mt-1 italic font-medium break-words">
                                                     {renderLinks(item.notes)}
-                                                </p>
-                                            )}
-                                            {item.durationMinutes && (
-                                                <p className="text-xs text-muted-foreground mt-1 text-primary/80 font-medium flex items-center gap-1">
-                                                    ⏳ {item.durationMinutes} min
                                                 </p>
                                             )}
                                             {item.questionsDone !== null && item.questionsDone !== undefined && (
