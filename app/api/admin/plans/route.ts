@@ -105,7 +105,11 @@ export async function GET(req: Request) {
             }
         },
         include: {
-            items: true
+            items: {
+                include: {
+                    subject: { select: { name: true } }
+                }
+            }
         }
     });
 
