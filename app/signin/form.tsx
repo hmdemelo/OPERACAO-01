@@ -138,7 +138,7 @@ export default function LoginForm() {
                 <div className="text-center text-sm w-full">
                     Ainda não possui conta?{" "}
                     <a
-                        href="https://wa.me/5563999462065?text=Ola%21%20Gostaria%20de%20saber%20mais%20sobre%20a%20Operacao%2001."
+                        href="https://wa.me/5563992545618?text=Ola%21%20Gostaria%20de%20saber%20mais%20sobre%20a%20Operacao%2001."
                         className="underline font-medium text-primary hover:text-primary/90"
                         target="_blank"
                         rel="noopener noreferrer"

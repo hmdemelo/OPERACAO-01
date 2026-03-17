@@ -24,6 +24,16 @@ export async function middleware(request: NextRequest) {
 
     // 3. Capturar Token para validação de sessão e manutenção
     const token = await getToken({ req: request })
+
+    // 3.1. Redirecionar usuários logados que acessam a Landing Page estática
+    if (pathname === "/" && token) {
+        if (token.role === "ADMIN" || token.role === "MENTOR") {
+            return NextResponse.redirect(new URL("/admin/dashboard", request.url))
+        } else {
+            return NextResponse.redirect(new URL("/student/dashboard", request.url))
+        }
+    }
+
     const isMaintenance = process.env.MAINTENANCE_MODE === "true"
 
     // 4. Verificação de Modo de Manutenção (Apenas Admin entra)
