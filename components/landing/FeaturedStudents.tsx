@@ -5,16 +5,17 @@ import { FeaturedStudent } from "@prisma/client";
 
 interface FeaturedStudentsProps {
     students: FeaturedStudent[];
+    config?: Record<string, any>;
 }
 
-export const FeaturedStudents = ({ students }: FeaturedStudentsProps) => {
+export const FeaturedStudents = ({ students, config = {} }: FeaturedStudentsProps) => {
     return (
         <section id="aprovados" className="py-32 px-6 bg-slate-900/20">
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
                     <div className="space-y-4">
-                        <h2 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em]">Mural da Glória</h2>
-                        <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">Legado Operação 01</h3>
+                        <h2 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em]">{config.featuredSubtitle || "Mural da Glória"}</h2>
+                        <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">{config.featuredTitle || "Legado Operação 01"}</h3>
                     </div>
                     <p className="text-slate-400 max-w-md text-sm font-medium">
                         Estes são alguns dos agentes que seguiram o método à risca e hoje ostentam o distintivo no peito. Sua foto será a próxima.

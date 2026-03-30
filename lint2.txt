@@ -1,0 +1,272 @@
+
+> operacao-01@0.1.0 lint
+> eslint
+
+
+/Users/hugo/projetos/OPERACAO-01/app/admin/concursos/page.tsx
+   25:5   warning  'DialogDescription' is defined but never used   @typescript-eslint/no-unused-vars
+   32:18  warning  'Trash2' is defined but never used              @typescript-eslint/no-unused-vars
+   83:16  warning  'resetEdit' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  134:18  warning  'error' is defined but never used               @typescript-eslint/no-unused-vars
+  153:18  warning  'error' is defined but never used               @typescript-eslint/no-unused-vars
+  172:18  warning  'error' is defined but never used               @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/admin/landing/page.tsx
+   31:46  warning  'ExternalLink' is defined but never used                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  163:12  warning  'isSettingsLoading' is assigned a value but never used                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+  212:8   warning  React Hook useEffect has a missing dependency: 'fetchSettings'. Either include it or remove the dependency array                                                                                                                                                                         react-hooks/exhaustive-deps
+  223:18  warning  'error' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  241:18  warning  'error' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  244:11  warning  'onUpdateStudent' is assigned a value but never used                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  257:18  warning  'error' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  275:18  warning  'error' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  322:18  warning  'error' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  338:18  warning  'error' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  341:11  warning  'onUpdateMethod' is assigned a value but never used                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  354:18  warning  'error' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  372:18  warning  'error' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  429:18  warning  'error' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  445:18  warning  'error' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  467:18  warning  'error' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  741:57  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/hugo/projetos/OPERACAO-01/app/admin/schedules/page.tsx
+  29:18  warning  'startOfWeek' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  81:8   warning  React Hook useEffect has a missing dependency: 'fetchOverview'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/hugo/projetos/OPERACAO-01/app/admin/subjects/page.tsx
+   25:5   warning  'DialogDescription' is defined but never used   @typescript-eslint/no-unused-vars
+   32:32  warning  'X' is defined but never used                   @typescript-eslint/no-unused-vars
+  104:16  warning  'resetEdit' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  215:18  warning  'error' is defined but never used               @typescript-eslint/no-unused-vars
+  236:18  warning  'error' is defined but never used               @typescript-eslint/no-unused-vars
+  266:18  warning  'error' is defined but never used               @typescript-eslint/no-unused-vars
+  297:18  warning  'error' is defined but never used               @typescript-eslint/no-unused-vars
+  320:18  warning  'error' is defined but never used               @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/admin/users/[id]/page.tsx
+   7:10  warning  'Role' is defined but never used                                                                                                                                   @typescript-eslint/no-unused-vars
+  36:17  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free                                                @typescript-eslint/ban-ts-comment
+  64:21  error    Do not use an `<a>` element to navigate to `/admin/users/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  78:29  error    Do not use an `<a>` element to navigate to `/admin/users/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+/Users/hugo/projetos/OPERACAO-01/app/admin/users/new/page.tsx
+  24:17  error  Do not use an `<a>` element to navigate to `/admin/users/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+/Users/hugo/projetos/OPERACAO-01/app/admin/users/page.tsx
+   97:8   warning  React Hook useEffect has a missing dependency: 'fetchUsers'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  168:18  warning  'error' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  192:18  warning  'error' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/admin/alerts/route.ts
+  6:27  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/admin/changelog/route.ts
+   5:26  warning  'revalidateTag' is defined but never used  @typescript-eslint/no-unused-vars
+  14:14  warning  'error' is defined but never used          @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/admin/concursos/route.ts
+  15:27  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/admin/contents/[id]/route.ts
+  60:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/admin/featured/route.ts
+  18:27  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/admin/method/[id]/route.ts
+  40:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/admin/method/reorder/route.ts
+  23:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/admin/method/route.ts
+  13:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  35:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/admin/plans/overview/route.ts
+  8:10  warning  'Role' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/admin/subjects/route.ts
+  13:27  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/admin/users/[id]/mentorship/route.ts
+  29:13  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  49:9   error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+/Users/hugo/projetos/OPERACAO-01/app/api/admin/users/route.ts
+    7:10  warning  'Role' is defined but never used                                                                                     @typescript-eslint/no-unused-vars
+   96:21  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  121:14  warning  'error' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/student/plan/[itemId]/route.ts
+   49:17  error    'topicName' is never reassigned. Use 'const' instead  prefer-const
+  111:20  warning  'log' is assigned a value but never used              @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/student/subjects/route.ts
+  6:27  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/app/api/user/profile/route.ts
+  26:27  warning  'req' is defined but never used          @typescript-eslint/no-unused-vars
+  50:14  warning  'error' is defined but never used        @typescript-eslint/no-unused-vars
+  65:20  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  66:22  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/Users/hugo/projetos/OPERACAO-01/app/signin/form.tsx
+  31:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/hugo/projetos/OPERACAO-01/app/signin/form.tsx:31:13
+  29 |     useEffect(() => {
+  30 |         if (searchParams?.get("registered") === "true") {
+> 31 |             setSuccess("Conta criada com sucesso. Faça login.")
+     |             ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  32 |         }
+  33 |         if (searchParams?.get("error")) {
+  34 |             setError("Falha na autenticação. Verifique suas credenciais.")  react-hooks/set-state-in-effect
+
+/Users/hugo/projetos/OPERACAO-01/app/student/log/page.tsx
+  99:18  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/components/admin/SubjectLinkModal.tsx
+  39:8  warning  React Hook useEffect has a missing dependency: 'fetchSubjects'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/hugo/projetos/OPERACAO-01/components/admin/WeeklyPlanEditor.tsx
+    5:27  warning  'startOfWeek' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+    6:10  warning  'ptBR' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+   19:35  warning  'parseFromDatabase' is defined but never used                                                                 @typescript-eslint/no-unused-vars
+   62:8   warning  React Hook useEffect has a missing dependency: 'fetchPlan'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  114:29  warning  'subjectName' is assigned a value but never used                                                              @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/components/admin/WeeklyPlanGrid.tsx
+  5:34  warning  'userId' is defined but never used            @typescript-eslint/no-unused-vars
+  8:18  warning  'setGrid' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/components/admin/dashboard/DashboardStudentRow.tsx
+  9:41  warning  'Calendar' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/components/admin/dashboard/DashboardSyncButton.tsx
+  37:18  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/components/admin/users/ActivityHeatmap.tsx
+  25:5  warning  'year' is assigned a value but never used           @typescript-eslint/no-unused-vars
+  36:9  error    'current' is never reassigned. Use 'const' instead  prefer-const
+
+/Users/hugo/projetos/OPERACAO-01/components/landing/CTA.tsx
+  4:10  warning  'generateWhatsAppLink' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/components/landing/FeaturedStudents.tsx
+  33:37  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/hugo/projetos/OPERACAO-01/components/landing/MarketingScripts.tsx
+  35:25  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  35:25  warning  img elements must have an alt prop, either with meaningful text, or an empty string for decorative images                                                                                                                                                                                jsx-a11y/alt-text
+
+/Users/hugo/projetos/OPERACAO-01/components/landing/Plans.tsx
+  3:10  warning  'logger' is defined but never used                @typescript-eslint/no-unused-vars
+  4:17  warning  'useEffect' is defined but never used             @typescript-eslint/no-unused-vars
+  4:28  warning  'useState' is defined but never used              @typescript-eslint/no-unused-vars
+  6:10  warning  'generateWhatsAppLink' is defined but never used  @typescript-eslint/no-unused-vars
+  8:6   warning  'Plan' is defined but never used                  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/components/layout/SidebarContext.tsx
+  22:24  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/hugo/projetos/OPERACAO-01/components/layout/SidebarContext.tsx:22:24
+  20 |         if (typeof window !== 'undefined') {
+  21 |             const saved = localStorage.getItem('sidebar-collapsed')
+> 22 |             if (saved) setIsCollapsed(saved === 'true')
+     |                        ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  23 |         }
+  24 |     }, [])
+  25 |  react-hooks/set-state-in-effect
+
+/Users/hugo/projetos/OPERACAO-01/components/student/WeeklyPlanView.tsx
+  5:47  warning  'startOfWeek' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/components/student/profile/AcademicCard.tsx
+  11:5  warning  'CardFooter' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/components/student/profile/AccountCard.tsx
+  32:10  warning  'User' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/components/student/profile/LinksCard.tsx
+  7:55  warning  'FormMessage' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/components/student/profile/profile-mapper.ts
+  10:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/hooks/use-toast.ts
+  21:7  warning  'actionTypes' is assigned a value but only used as a type  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/lib/auth/authOptions.ts
+  6:10  warning  'Role' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/lib/date-utils.ts
+  1:23  warning  'parseISO' is defined but never used    @typescript-eslint/no-unused-vars
+  1:41  warning  'addMinutes' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/lib/metrics/adminMetrics.ts
+  2:10  warning  'startOfWeek' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/lib/metrics/studentMetrics.ts
+  2:41  warning  'startOfWeek' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/lib/services/weeklyPlannerService.ts
+  2:48  warning  'isBefore' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/pagina/App.tsx
+    3:3   warning  'Bell' is defined but never used                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+    3:30  warning  'TrendingUp' is defined but never used                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+    3:42  warning  'Calendar' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+    5:6   warning  'Award' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+    5:30  warning  'Shield' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+    5:48  warning  'TargetIcon' is defined but never used                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+    6:3   warning  'ChevronRight' is defined but never used                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+    6:17  warning  'Star' is defined but never used                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+    6:23  warning  'MessageSquare' is defined but never used                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+    6:38  warning  'BarChart3' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+    6:49  warning  'PieChart' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+    7:3   warning  'Activity' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+    7:13  warning  'ArrowUpRight' is defined but never used                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+    7:27  warning  'TrendingDown' is defined but never used                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+    7:41  warning  'BookCheck' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+    8:32  warning  'Database' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+    8:42  warning  'Cpu' is defined but never used                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+    8:47  warning  'Search' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+    8:55  warning  'Check' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+    9:3   warning  'Medal' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+    9:10  warning  'GraduationCap' is defined but never used                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+    9:25  warning  'CreditCard' is defined but never used                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+    9:37  warning  'ShoppingCart' is defined but never used                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   10:35  warning  'Lightbulb' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   12:40  warning  'Notification' is defined but never used                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   12:54  warning  'Role' is defined but never used                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   13:10  warning  'SUBJECTS' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  205:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  381:27  warning  'email' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  541:13  warning  Expected an assignment or function call and instead saw an expression                                                                                                                                                                                                                    @typescript-eslint/no-unused-expressions
+  620:9   warning  'userLogs' is assigned a value but never used                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  642:37  warning  'logs' is defined but never used                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+
+/Users/hugo/projetos/OPERACAO-01/tailwind.config.ts
+  77:15  warning  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/Users/hugo/projetos/OPERACAO-01/types/next-auth.d.ts
+  1:8   warning  'NextAuth' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'JWT' is defined but never used       @typescript-eslint/no-unused-vars
+
+✖ 136 problems (11 errors, 125 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

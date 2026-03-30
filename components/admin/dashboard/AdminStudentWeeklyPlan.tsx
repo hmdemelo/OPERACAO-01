@@ -43,7 +43,7 @@ function renderLinks(text: string) {
 }
 
 const fetchWeeklyPlan = async (userId: string, date: Date): Promise<WeeklyPlan | null> => {
-    const dateStr = format(date, 'yyyy-MM-dd')
+    const dateStr = date.toISOString()
     const res = await fetch(`/api/admin/plans?userId=${userId}&date=${dateStr}`)
     if (!res.ok) {
         if (res.status === 404) return null;
@@ -129,7 +129,7 @@ export function AdminStudentWeeklyPlan({ userId, selectedDate }: { userId: strin
             <div className="bg-card p-4 rounded-lg border space-y-2">
                 <div className="flex justify-between items-center text-sm text-muted-foreground">
                     <span className="font-medium text-foreground">{Math.round(progress)}% Concluído</span>
-                    <span>{completedItems} de {totalItems} blocos</span>
+                    <span>{completedItems} de {totalItems} itens</span>
                 </div>
                 <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                     <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${progress}%` }} />
@@ -180,7 +180,6 @@ export function AdminStudentWeeklyPlan({ userId, selectedDate }: { userId: strin
                                                             {item.subject.name}
                                                         </span>
                                                     ) : null}
-                                                    <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">Bloco {item.blockIndex}</span>
                                                 </div>
                                                 {item.durationMinutes && (
                                                     <span className="text-xs text-primary/80 font-medium flex items-center gap-1 whitespace-nowrap">

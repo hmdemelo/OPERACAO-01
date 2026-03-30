@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth/authOptions';
 import { prisma } from '@/lib/db';
 import { isValid, parseISO } from 'date-fns';
 import { getAraguainaStartOfWeek } from '@/lib/date-utils';
-import { Role } from '@prisma/client';
+import { getMentorIdFilter } from '@/lib/auth/superAdmin';
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
@@ -28,15 +28,15 @@ export async function GET(req: Request) {
     }
 
     try {
-        const userRole = session.user.role as string
+        const mentorId = getMentorIdFilter({ id: session.user.id, role: session.user.role, email: session.user.email })
 
-        // Mentor: sees only their linked students
-        // Admin: sees all active students
-        const studentWhere: any = userRole === "MENTOR"
+        // Mentor: sees only their linked students (unless super admin)
+        // Admin / super admin: sees all active students
+        const studentWhere: any = mentorId
             ? {
                 role: 'STUDENT',
                 active: true,
-                studentLink: { mentorId: session.user.id },
+                studentLink: { mentorId },
             }
             : {
                 role: 'STUDENT',

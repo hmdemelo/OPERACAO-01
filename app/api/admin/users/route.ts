@@ -5,6 +5,7 @@ import { NextResponse } from "next/server"
 import bcrypt from "bcrypt"
 import { z } from "zod"
 import { Role } from "@prisma/client"
+import { getMentorIdFilter } from "@/lib/auth/superAdmin"
 
 const createUserSchema = z.object({
     email: z.string().email(),
@@ -38,15 +39,15 @@ export async function GET(req: Request) {
     try {
         // Mentor: only sees themselves + their own students
         // Admin: sees everyone (admins, mentors, students, orphans)
-        const userRole = session.user.role as string
         const activeFilter = showInactive ? {} : { active: true }
+        const mentorId = getMentorIdFilter({ id: session.user.id, role: session.user.role, email: session.user.email })
 
-        const whereClause = userRole === "MENTOR"
+        const whereClause = mentorId
             ? {
                 ...activeFilter,
                 OR: [
                     { id: session.user.id },
-                    { studentLink: { mentorId: session.user.id } } as any,
+                    { studentLink: { mentorId } } as any,
                 ]
             }
             : {

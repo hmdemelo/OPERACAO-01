@@ -34,6 +34,7 @@ type Settings = {
     support_email: string
     session_max_age: string
     maintenance_mode: string
+    mentor_dashboard_widgets: string
 }
 
 type Stats = {
@@ -88,7 +89,7 @@ function StatCard({ icon: Icon, label, value, sub }: {
 
 // ── Main page ────────────────────────────────────────────────────────────────
 export default function AdminSettingsPage() {
-    const [settings, setSettings] = useState<Settings | null>(null)
+    const [, setSettings] = useState<Settings | null>(null)
     const [stats, setStats] = useState<Stats | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
@@ -103,6 +104,7 @@ export default function AdminSettingsPage() {
         support_email: "",
         session_max_age: "86400",
         maintenance_mode: "false",
+        mentor_dashboard_widgets: "{}",
     })
 
     const fetchSettings = async () => {
@@ -165,6 +167,27 @@ export default function AdminSettingsPage() {
 
     const sessionHours = Math.round(parseInt(form.session_max_age || "86400") / 3600)
     const isMaintenanceOn = form.maintenance_mode === "true"
+    
+    // Parse widgets config safety
+    let mentorWidgets = {
+        kpi_cards: true,
+        subject_chart: true,
+        evolution_chart: true,
+        performance_table: true,
+        system_alerts: true,
+    }
+    try {
+        if (form.mentor_dashboard_widgets) {
+            mentorWidgets = { ...mentorWidgets, ...JSON.parse(form.mentor_dashboard_widgets) }
+        }
+    } catch {
+        // ignore
+    }
+
+    const toggleWidget = (key: keyof typeof mentorWidgets) => {
+        const next = { ...mentorWidgets, [key]: !mentorWidgets[key] }
+        set("mentor_dashboard_widgets", JSON.stringify(next))
+    }
 
     if (isLoading) {
         return (
@@ -323,6 +346,64 @@ export default function AdminSettingsPage() {
                         >
                             {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
                             Salvar Segurança
+                        </Button>
+                    </div>
+                </div>
+            </Section>
+
+            <Section
+                icon={BarChart3}
+                title="Personalização de Dashboards"
+                description="Controle os widgets e painéis visíveis na Dashboard"
+            >
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="flex items-center justify-between border rounded-lg p-3 bg-muted/10">
+                            <div>
+                                <p className="font-medium text-sm">Cards de KPI</p>
+                                <p className="text-xs text-muted-foreground">Totais, Engajamento, etc</p>
+                            </div>
+                            <Switch checked={mentorWidgets.kpi_cards} onCheckedChange={() => toggleWidget('kpi_cards')} />
+                        </div>
+                        <div className="flex items-center justify-between border rounded-lg p-3 bg-muted/10">
+                            <div>
+                                <p className="font-medium text-sm">Painel de Inteligência e Alertas</p>
+                                <p className="text-xs text-muted-foreground">Alertas críticos e de desempenho</p>
+                            </div>
+                            <Switch checked={mentorWidgets.system_alerts} onCheckedChange={() => toggleWidget('system_alerts')} />
+                        </div>
+                        <div className="flex items-center justify-between border rounded-lg p-3 bg-muted/10">
+                            <div>
+                                <p className="font-medium text-sm">Gráfico de Matérias</p>
+                                <p className="text-xs text-muted-foreground">Distribuição de estudos</p>
+                            </div>
+                            <Switch checked={mentorWidgets.subject_chart} onCheckedChange={() => toggleWidget('subject_chart')} />
+                        </div>
+                        <div className="flex items-center justify-between border rounded-lg p-3 bg-muted/10">
+                            <div>
+                                <p className="font-medium text-sm">Gráfico de Evolução Semanal</p>
+                                <p className="text-xs text-muted-foreground">Evolução do engajamento</p>
+                            </div>
+                            <Switch checked={mentorWidgets.evolution_chart} onCheckedChange={() => toggleWidget('evolution_chart')} />
+                        </div>
+
+                        <div className="flex items-center justify-between border rounded-lg p-3 bg-muted/10">
+                            <div>
+                                <p className="font-medium text-sm">Tabela de Desempenho (Ranking)</p>
+                                <p className="text-xs text-muted-foreground">Métricas detalhadas dos alunos</p>
+                            </div>
+                            <Switch checked={mentorWidgets.performance_table} onCheckedChange={() => toggleWidget('performance_table')} />
+                        </div>
+                    </div>
+                    <div className="flex justify-end pt-2">
+                        <Button
+                            size="sm"
+                            onClick={() => saveSection(["mentor_dashboard_widgets"])}
+                            disabled={isSaving}
+                            className="gap-2"
+                        >
+                            {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                            Salvar Dashboards
                         </Button>
                     </div>
                 </div>

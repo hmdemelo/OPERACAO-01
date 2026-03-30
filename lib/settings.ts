@@ -9,27 +9,18 @@ export const SETTING_DEFAULTS: Record<string, string> = {
     support_email: "",
     session_max_age: "86400", // 24 hours in seconds
     maintenance_mode: "false",
+    mentor_dashboard_widgets: JSON.stringify({
+        kpi_cards: true,
+        subject_chart: true,
+        evolution_chart: true,
+        performance_table: true,
+        system_alerts: true
+    }),
 }
 
 export const SETTING_KEYS = Object.keys(SETTING_DEFAULTS)
 
-// In-memory cache to avoid hitting DB on every request
-let cache: Record<string, string> | null = null
-let cacheExpiry = 0
-const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
-
-function isCacheValid() {
-    return cache !== null && Date.now() < cacheExpiry
-}
-
-function invalidateCache() {
-    cache = null
-    cacheExpiry = 0
-}
-
 export async function getAllSettings(): Promise<Record<string, string>> {
-    if (isCacheValid()) return cache!
-
     const rows = await prisma.systemSettings.findMany()
     const result = { ...SETTING_DEFAULTS }
 
@@ -37,8 +28,6 @@ export async function getAllSettings(): Promise<Record<string, string>> {
         result[row.key] = row.value
     }
 
-    cache = result
-    cacheExpiry = Date.now() + CACHE_TTL_MS
     return result
 }
 
@@ -57,8 +46,6 @@ export async function setSetting(key: string, value: string): Promise<void> {
         update: { value },
         create: { key, value },
     })
-
-    invalidateCache()
 }
 
 export async function setManySettings(entries: { key: string; value: string }[]): Promise<void> {
@@ -76,8 +63,6 @@ export async function setManySettings(entries: { key: string; value: string }[])
             })
         )
     )
-
-    invalidateCache()
 }
 
 // Typed getters for convenience

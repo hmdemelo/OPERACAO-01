@@ -4,7 +4,7 @@ import { getAraguainaStartOfWeek } from "@/lib/date-utils"
 
 export async function getWeeklySummary(userId: string) {
     const endDate = endOfDay(new Date())
-    const startDate = startOfDay(subDays(endDate, 7))
+    const startDate = getAraguainaStartOfWeek(new Date()) // Start of current week in Araguaina timezone
 
     const aggregations = await prisma.studyLog.aggregate({
         where: {
@@ -41,7 +41,7 @@ export async function getWeeklySummary(userId: string) {
 
 export async function getDailyProgress(userId: string) {
     const endDate = endOfDay(new Date())
-    const startDate = startOfDay(subDays(endDate, 7))
+    const startDate = getAraguainaStartOfWeek(new Date()) // Start of current week in Araguaina timezone
 
     const rawLogs = await prisma.studyLog.findMany({
         where: {
@@ -67,9 +67,8 @@ export async function getDailyProgress(userId: string) {
     }>()
 
     for (const log of rawLogs) {
-        // Use local date or UTC? Standardize on YYYY-MM-DD from ISO string (UTC)
-        // given we write setHours(0,0,0,0) in generic Date, likely UTC midnight if server is UTC.
-        const dateKey = log.date.toISOString().split("T")[0]
+        // Use Araguaina timezone (UTC-3) to group by local date, not UTC
+        const dateKey = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Araguaina' }).format(log.date)
 
         if (!dailyMap.has(dateKey)) {
             dailyMap.set(dateKey, { hours: 0, questions: 0, correct: 0 })

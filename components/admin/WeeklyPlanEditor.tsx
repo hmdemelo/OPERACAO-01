@@ -34,6 +34,7 @@ interface Subject {
 }
 
 interface PlanItem {
+    id?: string;
     dayOfWeek: number;
     blockIndex: number;
     subjectId: string;
@@ -75,13 +76,18 @@ export function WeeklyPlanEditor({ userId, subjects, studentName, userExams = []
         const payload = validItems.map(item => {
             const subject = subjects.find(s => s.id === item.subjectId);
             return {
-                ...item,
+                dayOfWeek: item.dayOfWeek,
+                blockIndex: item.blockIndex,
+                subjectId: item.subjectId,
+                content: item.content,
+                notes: item.notes,
+                durationMinutes: item.durationMinutes,
                 subjectName: subject?.name || "Matéria Desconhecida"
             };
         });
 
         localStorage.setItem(WEEKLY_PLAN_CLIPBOARD_KEY, JSON.stringify(payload));
-        toast.success(`${payload.length} blocos copiados para a área de transferência!`);
+        toast.success(`${payload.length} itens copiados para a área de transferência!`);
     };
 
     const handlePasteWeek = () => {
@@ -117,9 +123,9 @@ export function WeeklyPlanEditor({ userId, subjects, studentName, userExams = []
                 // The prompt says "colar no grid", usually paste overwrites or appends.
                 // Let's overwrite the week completely to avoid duplicate blockIndex collisions.
                 setPlanItems(acceptedItems);
-                toast.success(`${acceptedItems.length} blocos colados com sucesso!`);
+                toast.success(`${acceptedItems.length} itens colados com sucesso!`);
             } else {
-                toast.warning("Nenhum bloco pôde ser colado. O aluno não possui as matérias copiadas.");
+                toast.warning("Nenhum item pôde ser colado. O aluno não possui as matérias copiadas.");
             }
 
             if (rejectedSubjects.size > 0) {

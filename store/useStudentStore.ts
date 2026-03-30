@@ -30,5 +30,5 @@ export const useStudentStore = create<StudentState>((set) => ({
 
     setLoadingDashboard: (loading) => set({ isLoadingDashboard: loading }),
 
-    invalidateDashboard: () => set({ lastDashboardFetch: null, dashboardData: null }),
+    invalidateDashboard: () => set({ lastDashboardFetch: 1 }),
 }))

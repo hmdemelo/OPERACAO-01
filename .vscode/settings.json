@@ -1,1 +1,4 @@
-{}
+{
+  "pyrefly.enabled": false,
+  "python.languageServer": "Default"
+}

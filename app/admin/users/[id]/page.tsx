@@ -5,11 +5,12 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db"
 import { ProfileForm } from "@/components/student/ProfileForm"
 import { Role } from "@prisma/client"
+import { getMentorIdFilter } from "@/lib/auth/superAdmin"
 
 export default async function AdminUserEditPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions)
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || !["ADMIN", "MENTOR"].includes(session.user.role)) {
         redirect("/admin/dashboard")
     }
 
@@ -48,11 +49,13 @@ export default async function AdminUserEditPage({ params }: { params: Promise<{ 
     }
 
     // SECURITY GUARD: Ensure mentor is not trying to edit another mentor's student
-    if (user.role === "STUDENT") {
+    const mentorId = getMentorIdFilter({ id: session.user.id, role: session.user.role, email: session.user.email })
+
+    if (mentorId && user.role === "STUDENT") {
         const studentLink = (user as any).studentLink;
         const studentMentorId = studentLink?.mentorId;
         const isOrphan = !studentMentorId;
-        const isMyStudent = studentMentorId === session.user.id;
+        const isMyStudent = studentMentorId === mentorId;
 
         if (!isMyStudent && !isOrphan) {
             return (

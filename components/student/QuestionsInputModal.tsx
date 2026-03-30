@@ -48,7 +48,7 @@ export function QuestionsInputModal({ isOpen, onClose, onSave, itemContent }: Qu
                 <DialogHeader>
                     <DialogTitle>Registro de Performance</DialogTitle>
                     <DialogDescription>
-                        Informe seu desempenho no bloco: <span className="font-semibold text-foreground">{itemContent}</span>
+                        Informe seu desempenho em: <span className="font-semibold text-foreground">{itemContent}</span>
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">

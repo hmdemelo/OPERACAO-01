@@ -16,15 +16,29 @@ interface LandingPageProps {
     config: {
         heroTitle: string;
         heroSubtitle: string;
-        heroVideoUrl: string;
+        heroVideoUrl?: string;
+        heroBadgeText?: string;
+        heroPrimaryCtaText?: string;
+        heroSecondaryCtaText?: string;
+        heroTrustBar?: string;
+        plansTitle?: string;
+        plansSubtitle?: string;
+        featuredTitle?: string;
+        featuredSubtitle?: string;
+        methodTitle?: string;
+        methodSubtitle?: string;
         ctaTitle: string;
+        ctaSubtitle?: string;
         ctaButtonText: string;
+        footerLegalText?: string;
+        stickyWhatsappEnabled?: boolean;
+        stickyWhatsappText?: string;
         whatsappNumber: string;
         whatsappMessage: string;
-        instagramUrl: string;
-        youtubeUrl: string;
-        fbPixelId: string;
-        gtmId: string;
+        instagramUrl?: string;
+        youtubeUrl?: string;
+        fbPixelId?: string;
+        gtmId?: string;
     };
 }
 
@@ -37,9 +51,9 @@ export function LandingPage({ featuredStudents, methodItems, plans, config }: La
 
             <main className="relative">
                 <Hero config={config} />
-                <Method items={methodItems} />
-                <FeaturedStudents students={featuredStudents} />
-                <Plans plans={plans} whatsappNumber={config.whatsappNumber} whatsappMessage={config.whatsappMessage} />
+                <Method items={methodItems} config={config} />
+                <FeaturedStudents students={featuredStudents} config={config} />
+                <Plans plans={plans} config={config} />
                 <CTA config={config} />
             </main>
 

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/authOptions"
 import { redirect } from "next/navigation"
 import { WeeklyPlanEditor } from "@/components/admin/WeeklyPlanEditor"
+import { getMentorIdFilter } from "@/lib/auth/superAdmin"
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -33,7 +34,8 @@ export default async function AdminStudentPlanPage({ params }: PageProps) {
     })
 
     // Build subject filter: for MENTOR, intersect with their own subjects
-    const userRole = session.user.role as string
+    const mentorId = getMentorIdFilter({ id: session.user.id, role: session.user.role, email: session.user.email })
+
     const subjectWhere: any = {
         active: true,
         users: {
@@ -41,7 +43,7 @@ export default async function AdminStudentPlanPage({ params }: PageProps) {
         }
     }
 
-    if (userRole === "MENTOR") {
+    if (mentorId) {
         // Get mentor's own subject IDs
         const mentorSubjects = await prisma.userSubject.findMany({
             where: { userId: session.user.id },

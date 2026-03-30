@@ -7,6 +7,7 @@ import {
     getSubjectDistribution,
     getStudyHistory,
 } from "@/lib/metrics/studentMetrics"
+
 import { DashboardContainer } from "@/components/student/DashboardContainer"
 
 export default async function StudentDashboardPage() {
@@ -23,7 +24,7 @@ export default async function StudentDashboardPage() {
         getWeeklySummary(userId),
         getDailyProgress(userId),
         getSubjectDistribution(userId),
-        getStudyHistory(userId, { period: 'all', limit: 100 }) // Fetch last 100 logs for history context
+        getStudyHistory(userId, { period: 'all', limit: 100 })
     ])
 
     return (

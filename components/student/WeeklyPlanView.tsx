@@ -47,7 +47,7 @@ function renderLinks(text: string) {
 }
 
 const fetchWeeklyPlan = async (date: Date): Promise<WeeklyPlan | null> => {
-    const dateStr = format(date, 'yyyy-MM-dd')
+    const dateStr = date.toISOString()
     const res = await fetch(`/api/student/plan?date=${dateStr}`)
     if (!res.ok) {
         if (res.status === 404) return null;
@@ -255,7 +255,6 @@ export default function WeeklyPlanView() {
                                                         {item.subject.name}
                                                     </span>
                                                 ) : null}
-                                                <span className="text-xs text-muted-foreground font-medium">Block {item.blockIndex}</span>
                                             </div>
                                             <p className={`text-base ${item.completed ? 'text-muted-foreground line-through' : 'text-card-foreground'}`}>
                                                 {item.content || "Sem descrição"}

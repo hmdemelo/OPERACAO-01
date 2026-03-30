@@ -4,6 +4,17 @@ Acompanhe as novidades e melhorias da plataforma.
 
 ---
 
+## 🚧 Unreleased
+
+### 🐛 Correções
+- **Cronograma semanal (Admin/Mentor)** — Corrigido problema em que salvar alterações no cronograma podia resetar blocos já concluídos pelo aluno. O salvamento agora preserva itens existentes e seus estados de conclusão ao adicionar novos blocos.
+
+### 🔧 Melhorias
+- **Persistência de plano semanal** — Atualizado fluxo de gravação para estratégia diferencial (atualiza existentes, cria novos e remove apenas blocos realmente excluídos), reduzindo risco de inconsistências em `completed`, `studyLogId` e métricas associadas.
+- **Dashboard de alertas** — Consolidada a abordagem de alertas na Central de Inteligência (`DashboardInsightsPanel`), unificando alertas preditivos e alertas de período no mesmo painel.
+
+---
+
 ## 🚀 v1.4.0 — 01/03/2025
 
 ### ✨ Novidades

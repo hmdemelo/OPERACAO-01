@@ -22,7 +22,6 @@ import {
     DialogTitle,
     DialogTrigger,
     DialogFooter,
-    DialogDescription,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -105,8 +104,29 @@ const settingsSchema = z.object({
     landing_hero_title: z.string().min(1, "Título é obrigatório"),
     landing_hero_subtitle: z.string().min(1, "Subtítulo é obrigatório"),
     landing_hero_video_url: z.string().optional(),
+    landing_hero_badge_text: z.string().optional(),
+    landing_hero_primary_cta_text: z.string().optional(),
+    landing_hero_secondary_cta_text: z.string().optional(),
+    landing_hero_trust_bar: z.string().optional(),
+
+    landing_plans_title: z.string().optional(),
+    landing_plans_subtitle: z.string().optional(),
+
+    landing_featured_title: z.string().optional(),
+    landing_featured_subtitle: z.string().optional(),
+
+    landing_method_title: z.string().optional(),
+    landing_method_subtitle: z.string().optional(),
+
     landing_cta_title: z.string().min(1, "Título do CTA é obrigatório"),
+    landing_cta_subtitle: z.string().optional(),
     landing_cta_button_text: z.string().min(1, "Texto do botão é obrigatório"),
+    
+    landing_footer_legal_text: z.string().optional(),
+    
+    landing_sticky_whatsapp_enabled: z.enum(["true", "false"]).optional(),
+    landing_sticky_whatsapp_text: z.string().optional(),
+
     contact_whatsapp_number: z.string().min(10, "Número inválido"),
     contact_whatsapp_message: z.string().min(1, "Mensagem é obrigatória"),
     social_instagram_url: z.string().url("Link inválido").optional().or(z.literal("")),
@@ -493,20 +513,55 @@ export default function AdminLandingPage() {
                                         <div className="h-8 w-1 bg-orange-600 rounded-full" />
                                         <div>
                                             <CardTitle>Seção Hero (Topo)</CardTitle>
-                                            <CardDescription>Título principal e subtítulo da página</CardDescription>
+                                            <CardDescription>Configurações da dobra principal da página</CardDescription>
                                         </div>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
+                                    <FormInput label="Badge Text (Texto com fundo laranja)" register={settingsForm.register("landing_hero_badge_text")} placeholder="Ex: O ÚNICO MÉTODO COMPLETO" />
                                     <div className="space-y-2">
                                         <Label>Título Principal</Label>
-                                        <Textarea {...settingsForm.register("landing_hero_title")} rows={3} placeholder="DOMINE CADA EDITAL" />
+                                        <Textarea {...settingsForm.register("landing_hero_title")} rows={3} placeholder="DOMINE CADA EDITAL..." />
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Subtítulo / Descrição</Label>
                                         <Textarea {...settingsForm.register("landing_hero_subtitle")} rows={4} placeholder="A mentoria que transforma seu esforço..." />
                                     </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormInput label="Texto Botão Primário" register={settingsForm.register("landing_hero_primary_cta_text")} placeholder="ASSISTIR AULA GRÁTIS" />
+                                        <FormInput label="Texto Botão Secundário" register={settingsForm.register("landing_hero_secondary_cta_text")} placeholder="QUERO ME ALISTAR" />
+                                    </div>
+                                    <FormInput label="Trust Bar (Ex: MAIS DE 2000 ALUNOS...)" register={settingsForm.register("landing_hero_trust_bar")} />
                                     <FormInput label="URL do Vídeo/Fundo" register={settingsForm.register("landing_hero_video_url")} placeholder="https://..." />
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-8 w-1 bg-orange-600 rounded-full" />
+                                        <div>
+                                            <CardTitle>Títulos das Seções</CardTitle>
+                                            <CardDescription>Títulos secundários pelas páginas</CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="border p-4 rounded-md space-y-4">
+                                        <div className="font-semibold text-sm">Seção de Planos</div>
+                                        <FormInput label="Título dos Planos" register={settingsForm.register("landing_plans_title")} />
+                                        <FormInput label="Subtítulo dos Planos" register={settingsForm.register("landing_plans_subtitle")} />
+                                    </div>
+                                    <div className="border p-4 rounded-md space-y-4">
+                                        <div className="font-semibold text-sm">Seção de Destaques</div>
+                                        <FormInput label="Título dos Destaques" register={settingsForm.register("landing_featured_title")} />
+                                        <FormInput label="Subtítulo dos Destaques" register={settingsForm.register("landing_featured_subtitle")} />
+                                    </div>
+                                    <div className="border p-4 rounded-md space-y-4">
+                                        <div className="font-semibold text-sm">Seção do Método</div>
+                                        <FormInput label="Título do Método" register={settingsForm.register("landing_method_title")} />
+                                        <FormInput label="Subtítulo do Método" register={settingsForm.register("landing_method_subtitle")} />
+                                    </div>
                                 </CardContent>
                             </Card>
 
@@ -524,6 +579,10 @@ export default function AdminLandingPage() {
                                     <div className="space-y-2">
                                         <Label>Título do CTA</Label>
                                         <Textarea {...settingsForm.register("landing_cta_title")} rows={3} placeholder="O PRÓXIMO NOME NA LISTA SERÁ O SEU" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Subtítulo do CTA</Label>
+                                        <Textarea {...settingsForm.register("landing_cta_subtitle")} rows={2} />
                                     </div>
                                     <FormInput label="Texto do Botão" register={settingsForm.register("landing_cta_button_text")} placeholder="QUERO SER APROVADO" />
                                 </CardContent>
@@ -549,6 +608,26 @@ export default function AdminLandingPage() {
                                         <Textarea {...settingsForm.register("contact_whatsapp_message")} rows={2} />
                                     </div>
                                     <FormInput label="YouTube (Link Full)" register={settingsForm.register("social_youtube_url")} />
+                                    
+                                    <div className="border p-4 rounded-md space-y-4">
+                                        <div className="font-semibold text-sm">WhatsApp Flutuante (Balãozinho)</div>
+                                        <div className="space-y-2">
+                                            <Label>Ativar Botão Flutuante (Sim/Não)</Label>
+                                            <Select 
+                                                onValueChange={(v) => settingsForm.setValue("landing_sticky_whatsapp_enabled", v as "true" | "false")} 
+                                                value={settingsForm.watch("landing_sticky_whatsapp_enabled") || "false"}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecione..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="true">Sim</SelectItem>
+                                                    <SelectItem value="false">Não</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <FormInput label="Texto do botão flutuante (Opcional)" register={settingsForm.register("landing_sticky_whatsapp_text")} placeholder="Posso ajudar?" />
+                                    </div>
                                 </CardContent>
                             </Card>
 
@@ -557,12 +636,16 @@ export default function AdminLandingPage() {
                                     <div className="flex items-center gap-2">
                                         <div className="h-8 w-1 bg-orange-600 rounded-full" />
                                         <div>
-                                            <CardTitle>Marketing & Analytics</CardTitle>
-                                            <CardDescription>Scripts de rastreio e conversão</CardDescription>
+                                            <CardTitle>Rodapé & Marketing</CardTitle>
+                                            <CardDescription>Textos legais e Scripts de rastreio</CardDescription>
                                         </div>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label>Texto Legal (Rodapé)</Label>
+                                        <Textarea {...settingsForm.register("landing_footer_legal_text")} rows={3} placeholder="Este site não é afiliado ao Facebook..." />
+                                    </div>
                                     <FormInput label="Facebook Pixel ID" register={settingsForm.register("marketing_fb_pixel_id")} placeholder="123456789..." />
                                     <FormInput label="Google Tag Manager ID" register={settingsForm.register("marketing_google_tag_manager_id")} placeholder="GTM-XXXX..." />
                                     <div className="p-4 bg-muted/30 rounded-lg text-xs text-muted-foreground">

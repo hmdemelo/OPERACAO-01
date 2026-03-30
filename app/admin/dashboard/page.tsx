@@ -1,12 +1,13 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/authOptions"
 import { redirect } from "next/navigation"
+import { getMentorIdFilter } from "@/lib/auth/superAdmin"
 import {
     getCachedDashboardSummary,
     getCachedSubjectDistributionAll,
-    getCachedWeeklyEvolution,
-    getCachedScheduleAdherence
+    getCachedWeeklyEvolution
 } from "@/lib/metrics/cachedAdminMetrics"
+import { getSetting } from "@/lib/settings"
 import {
     Table,
     TableBody,
@@ -17,10 +18,9 @@ import {
 } from "@/components/ui/table"
 import { DashboardStudentRow } from "@/components/admin/dashboard/DashboardStudentRow"
 import { DashboardKpiCards } from "@/components/admin/dashboard/DashboardKpiCards"
-import { DashboardAlertPanel } from "@/components/admin/dashboard/DashboardAlertPanel"
+import { DashboardInsightsPanel } from "@/components/admin/dashboard/DashboardInsightsPanel"
 import { DashboardSubjectChart } from "@/components/admin/dashboard/DashboardSubjectChart"
 import { DashboardEvolutionChart } from "@/components/admin/dashboard/DashboardEvolutionChart"
-import { DashboardScheduleAdherence } from "@/components/admin/dashboard/DashboardScheduleAdherence"
 import Link from "next/link"
 import { ArrowUpDown } from "lucide-react"
 import { DashboardPagination } from "@/components/admin/dashboard/DashboardPagination"
@@ -50,16 +50,32 @@ export default async function AdminDashboardPage({
     const limit = Number(params?.limit) || 10
     const period = (params?.period as 'week' | 'fortnight' | 'all') || 'week'
 
-    // Mentors only see their own students
-    const userRole = session.user.role as string
-    const mentorId = userRole === "MENTOR" ? session.user.id : undefined
-    const [summary, subjectDistribution, weeklyEvolution, scheduleAdherence] = await Promise.all([
+    // Mentors only see their own students — except super admins who see all
+    const mentorId = getMentorIdFilter({ id: session.user.id, role: session.user.role, email: session.user.email })
+    const [summary, subjectDistribution, weeklyEvolution, mentorWidgetsRaw] = await Promise.all([
         getCachedDashboardSummary(period, mentorId),
         getCachedSubjectDistributionAll(period, mentorId),
         getCachedWeeklyEvolution(mentorId),
-        getCachedScheduleAdherence(mentorId),
+        getSetting("mentor_dashboard_widgets"),
     ])
-    const dashboardTitle = userRole === "MENTOR" ? "Meus Alunos" : "Visão Geral Admin"
+    
+    // Parse mentor widgets
+    let mentorWidgets = {
+        kpi_cards: true,
+        subject_chart: true,
+        evolution_chart: true,
+        performance_table: true,
+        system_alerts: true,
+    }
+    if (mentorWidgetsRaw) {
+        try {
+            mentorWidgets = { ...mentorWidgets, ...JSON.parse(mentorWidgetsRaw) }
+        } catch {
+            // ignore
+        }
+    }
+
+    const dashboardTitle = session.user.role === "MENTOR" ? "Meus Alunos" : "Visão Geral Admin"
 
     // Sorting Logic
     const sortedData = [...summary.students].sort((a, b) => {
@@ -115,98 +131,101 @@ export default async function AdminDashboardPage({
             </div>
 
             {/* KPI Cards */}
-            <DashboardKpiCards
-                totalStudents={summary.totalStudents}
-                avgAccuracy={summary.avgAccuracy}
-                totalHours={summary.totalHours}
-                engagementRate={summary.engagementRate}
-                totalQuestions={summary.totalQuestions}
-                activeStudents={summary.activeStudents}
-            />
+            {mentorWidgets.kpi_cards && (
+                <DashboardKpiCards
+                    totalStudents={summary.totalStudents}
+                    avgAccuracy={summary.avgAccuracy}
+                    totalHours={summary.totalHours}
+                    engagementRate={summary.engagementRate}
+                    totalQuestions={summary.totalQuestions}
+                    activeStudents={summary.activeStudents}
+                />
+            )}
 
-            {/* Alert Panel */}
-            <DashboardAlertPanel
-                zeroActivity={summary.alerts.zeroActivity}
-                lowAccuracy={summary.alerts.lowAccuracy}
-                lowActivity={summary.alerts.lowActivity}
-            />
+            {/* Insights and Alerts */}
+            {mentorWidgets.system_alerts && (
+                <DashboardInsightsPanel
+                    zeroActivity={summary.alerts.zeroActivity}
+                    lowAccuracy={summary.alerts.lowAccuracy}
+                    lowActivity={summary.alerts.lowActivity}
+                />
+            )}
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <DashboardSubjectChart data={subjectDistribution} />
-                <DashboardEvolutionChart data={weeklyEvolution} />
+                {mentorWidgets.subject_chart && (
+                    <DashboardSubjectChart data={subjectDistribution} />
+                )}
+                {mentorWidgets.evolution_chart && (
+                    <DashboardEvolutionChart data={weeklyEvolution} />
+                )}
             </div>
 
-            {/* Schedule Adherence */}
-            <DashboardScheduleAdherence
-                students={scheduleAdherence.students}
-                avgAdherence={scheduleAdherence.avgAdherence}
-                withPlan={scheduleAdherence.withPlan}
-                withoutPlan={scheduleAdherence.withoutPlan}
-                completed={scheduleAdherence.completed}
-            />
+
 
             {/* Performance Table */}
-            <div className="rounded-md border">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[80px]">
-                                <Link href={getSortLink('rank')} prefetch={false} className="flex items-center gap-1 hover:text-foreground">
-                                    Rank <ArrowUpDown className="h-3 w-3" />
-                                </Link>
-                            </TableHead>
-                            <TableHead>
-                                <Link href={getSortLink('aluno')} prefetch={false} className="flex items-center gap-1 hover:text-foreground">
-                                    Aluno <ArrowUpDown className="h-3 w-3" />
-                                </Link>
-                            </TableHead>
-                            <TableHead className="text-right">
-                                <Link href={getSortLink('accuracy')} prefetch={false} className="flex items-center gap-1 justify-end hover:text-foreground">
-                                    Precisão <ArrowUpDown className="h-3 w-3" />
-                                </Link>
-                            </TableHead>
-                            <TableHead className="text-right">
-                                <Link href={getSortLink('questions')} prefetch={false} className="flex items-center gap-1 justify-end hover:text-foreground">
-                                    Questões <ArrowUpDown className="h-3 w-3" />
-                                </Link>
-                            </TableHead>
-                            <TableHead className="text-right">
-                                <Link href={getSortLink('hours')} prefetch={false} className="flex items-center gap-1 justify-end hover:text-foreground">
-                                    Horas <ArrowUpDown className="h-3 w-3" />
-                                </Link>
-                            </TableHead>
-                            <TableHead className="text-center w-[150px]">Status</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {performanceData.length === 0 ? (
+            {mentorWidgets.performance_table && (
+                <div className="rounded-md border">
+                    <Table>
+                        <TableHeader>
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center h-24">
-                                    Nenhum dado de aluno disponível.
-                                </TableCell>
+                                <TableHead className="w-[80px]">
+                                    <Link href={getSortLink('rank')} prefetch={false} className="flex items-center gap-1 hover:text-foreground">
+                                        Rank <ArrowUpDown className="h-3 w-3" />
+                                    </Link>
+                                </TableHead>
+                                <TableHead>
+                                    <Link href={getSortLink('aluno')} prefetch={false} className="flex items-center gap-1 hover:text-foreground">
+                                        Aluno <ArrowUpDown className="h-3 w-3" />
+                                    </Link>
+                                </TableHead>
+                                <TableHead className="text-right">
+                                    <Link href={getSortLink('accuracy')} prefetch={false} className="flex items-center gap-1 justify-end hover:text-foreground">
+                                        Precisão <ArrowUpDown className="h-3 w-3" />
+                                    </Link>
+                                </TableHead>
+                                <TableHead className="text-right">
+                                    <Link href={getSortLink('questions')} prefetch={false} className="flex items-center gap-1 justify-end hover:text-foreground">
+                                        Questões <ArrowUpDown className="h-3 w-3" />
+                                    </Link>
+                                </TableHead>
+                                <TableHead className="text-right">
+                                    <Link href={getSortLink('hours')} prefetch={false} className="flex items-center gap-1 justify-end hover:text-foreground">
+                                        Horas <ArrowUpDown className="h-3 w-3" />
+                                    </Link>
+                                </TableHead>
+                                <TableHead className="text-center w-[150px]">Status</TableHead>
                             </TableRow>
-                        ) : (
-                            performanceData.map((student, index) => (
-                                <DashboardStudentRow
-                                    key={student.id}
-                                    rank={offset + index + 1}
-                                    user={{
-                                        id: student.id,
-                                        name: student.name,
-                                        email: null
-                                    }}
-                                    stats={{
-                                        accuracy: student.accuracy,
-                                        questions: student.totalQuestions,
-                                        hours: student.totalHours
-                                    }}
-                                />
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+                        </TableHeader>
+                        <TableBody>
+                            {performanceData.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center h-24">
+                                        Nenhum dado de aluno disponível.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                performanceData.map((student, index) => (
+                                    <DashboardStudentRow
+                                        key={student.id}
+                                        rank={offset + index + 1}
+                                        user={{
+                                            id: student.id,
+                                            name: student.name,
+                                            email: null
+                                        }}
+                                        stats={{
+                                            accuracy: student.accuracy,
+                                            questions: student.totalQuestions,
+                                            hours: student.totalHours
+                                        }}
+                                    />
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            )}
 
             <DashboardPagination
                 currentPage={page}

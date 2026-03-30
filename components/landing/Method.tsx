@@ -13,13 +13,14 @@ interface MethodItem {
 
 interface MethodProps {
     items?: MethodItem[];
+    config?: Record<string, any>;
 }
 
 const IconMap: Record<string, any> = {
     Compass, PenTool, Target, Trophy, Map, Shield, Sword, Crosshair, Flag, BookOpen, Brain, Activity
 };
 
-export const Method = ({ items }: MethodProps) => {
+export const Method = ({ items, config = {} }: MethodProps) => {
     const defaultItems: MethodItem[] = [
         {
             step: "01",
@@ -53,8 +54,8 @@ export const Method = ({ items }: MethodProps) => {
         <section id="metodo" className="py-32 px-6 relative">
             <div className="max-w-7xl mx-auto">
                 <div className="text-center space-y-4 mb-20">
-                    <h2 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em]">Engenharia da Aprovação</h2>
-                    <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">O Método Operação 01</h3>
+                    <h2 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em]">{config.methodSubtitle || "Engenharia da Aprovação"}</h2>
+                    <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">{config.methodTitle || "O Método Operação 01"}</h3>
                 </div>
 
                 <div className="grid lg:grid-cols-4 gap-4">

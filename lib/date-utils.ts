@@ -8,7 +8,10 @@ const TIMEZONE = 'America/Araguaina'; // GMT-3 permanente
  */
 export function getAraguainaStartOfWeek(date: Date | string): Date {
     // Normaliza para string yyyy-mm-dd para evitar confusão de fuso no parsing inicial
-    const datePart = typeof date === 'string' ? date.split('T')[0] : format(date, 'yyyy-MM-dd');
+    // Para Date objects, converter para Araguaína primeiro evita que o timezone local mude o dia
+    const datePart = typeof date === 'string'
+        ? date.split('T')[0]
+        : format(toZonedTime(date, TIMEZONE), 'yyyy-MM-dd');
 
     // Cria a data diretamente no fuso de Araguaina às 12:00 (meio-dia)
     // Usar meio-dia evita que qualquer oscilação de fuso (-3, -2, etc) mude o dia

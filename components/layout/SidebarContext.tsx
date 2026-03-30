@@ -19,7 +19,9 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
         // Check if window is defined (it should be in useEffect, but good practice)
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('sidebar-collapsed')
-            if (saved) setIsCollapsed(saved === 'true')
+            setTimeout(() => {
+                if (saved) setIsCollapsed(saved === 'true')
+            }, 0)
         }
     }, [])
 

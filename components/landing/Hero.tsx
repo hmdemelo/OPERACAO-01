@@ -8,7 +8,7 @@ interface HeroProps {
     config: {
         heroTitle: string;
         heroSubtitle: string;
-        heroVideoUrl: string;
+        heroVideoUrl?: string;
     };
 }
 

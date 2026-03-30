@@ -27,12 +27,14 @@ export default function LoginForm() {
     const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
-        if (searchParams?.get("registered") === "true") {
-            setSuccess("Conta criada com sucesso. Faça login.")
-        }
-        if (searchParams?.get("error")) {
-            setError("Falha na autenticação. Verifique suas credenciais.")
-        }
+        setTimeout(() => {
+            if (searchParams?.get("registered") === "true") {
+                setSuccess("Conta criada com sucesso. Faça login.")
+            }
+            if (searchParams?.get("error")) {
+                setError("Falha na autenticação. Verifique suas credenciais.")
+            }
+        }, 0)
     }, [searchParams])
 
     const handleSubmit = async (e: React.FormEvent) => {

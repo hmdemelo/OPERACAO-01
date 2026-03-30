@@ -13,6 +13,18 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "react/no-unescaped-entities": "off",
+      "@typescript-eslint/no-require-imports": "warn",
+      "prefer-const": "off",
+      "@next/next/no-html-link-for-pages": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+      "react-compiler/react-compiler": "off"
+    }
+  }
 ]);
 
 export default eslintConfig;

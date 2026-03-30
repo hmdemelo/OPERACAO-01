@@ -19,15 +19,14 @@ type Plan = {
 
 interface PlansProps {
     plans: any[];
-    whatsappNumber: string;
-    whatsappMessage: string;
+    config?: Record<string, any>;
 }
 
-export const Plans = ({ plans, whatsappNumber, whatsappMessage }: PlansProps) => {
+export const Plans = ({ plans, config = {} }: PlansProps) => {
     const handleWhatsAppRedirect = (planMessage?: string) => {
-        const message = planMessage || whatsappMessage;
+        const message = planMessage || config.whatsappMessage || "";
         // Se whatsappNumber for apenas dígitos, garante o prefixo 55 se necessário
-        const cleanNumber = whatsappNumber.replace(/\D/g, '');
+        const cleanNumber = (config.whatsappNumber || "").replace(/\D/g, '');
         const link = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
         window.open(link, '_blank');
     };
@@ -38,8 +37,8 @@ export const Plans = ({ plans, whatsappNumber, whatsappMessage }: PlansProps) =>
         <section id="planos" className="py-32 px-6 relative">
             <div className="max-w-7xl mx-auto">
                 <div className="text-center space-y-4 mb-20">
-                    <h2 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em]">Seu Alistamento</h2>
-                    <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">Invista no seu futuro</h3>
+                    <h2 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.4em]">{config.plansSubtitle || "Seu Alistamento"}</h2>
+                    <h3 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">{config.plansTitle || "Invista no seu futuro"}</h3>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-8 items-stretch">

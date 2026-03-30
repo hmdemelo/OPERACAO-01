@@ -9,6 +9,7 @@ import { DailyProgressChart } from "./dashboard/DailyProgressChart"
 import { SubjectDistributionChart } from "./dashboard/SubjectDistributionChart"
 import { HistoryTable } from "./dashboard/HistoryTable"
 
+
 import { useStudentStore } from "@/store/useStudentStore"
 import { useEffect, useCallback } from "react"
 import { Loader2 } from "lucide-react"
@@ -19,6 +20,7 @@ interface DashboardContainerProps {
         dailyProgress: any[]
         subjectDistribution: any[]
         fullHistory: any[]
+
     }
 }
 
@@ -33,36 +35,37 @@ export function DashboardContainer({
         lastDashboardFetch
     } = useStudentStore()
 
-    const loadData = useCallback(async () => {
-        // If we have initial data (from server) and no data in store, use initial
+    const fetchDashboard = useCallback(async () => {
+        setLoadingDashboard(true)
+        try {
+            const res = await fetch('/api/student/dashboard', {
+                headers: { 'Cache-Control': 'no-cache' }
+            })
+            if (res.ok) {
+                const data = await res.json()
+                setDashboardData(data)
+            }
+        } catch (error) {
+            console.error("Error loading dashboard data:", error)
+        } finally {
+            setLoadingDashboard(false)
+        }
+    }, [setDashboardData, setLoadingDashboard])
+
+    // Effect 1: Initialization — use initialData from Server Component if store is empty
+    useEffect(() => {
         if (initialData && !dashboardData) {
             setDashboardData(initialData)
-            return
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
-        // Check if we need to fetch (if no data or if it's more than 5 minutes old)
-        const fiveMinutes = 5 * 60 * 1000
-        const isStale = lastDashboardFetch && (Date.now() - lastDashboardFetch > fiveMinutes)
-
-        if (!dashboardData || isStale) {
-            setLoadingDashboard(true)
-            try {
-                const res = await fetch('/api/student/dashboard')
-                if (res.ok) {
-                    const data = await res.json()
-                    setDashboardData(data)
-                }
-            } catch (error) {
-                console.error("Error loading dashboard data:", error)
-            } finally {
-                setLoadingDashboard(false)
-            }
-        }
-    }, [initialData, dashboardData, lastDashboardFetch, setDashboardData, setLoadingDashboard])
-
+    // Effect 2: Invalidation — trigger immediate refetch when lastDashboardFetch === 1 (invalidated)
     useEffect(() => {
-        loadData()
-    }, [loadData])
+        if (lastDashboardFetch === 1) {
+            fetchDashboard()
+        }
+    }, [lastDashboardFetch, fetchDashboard])
 
     // Use current data from store or initial data as fallback
     const currentData = dashboardData || initialData
@@ -109,6 +112,8 @@ export function DashboardContainer({
                     </Button>
                 )}
             </div>
+
+
 
             <PerformanceStats
                 filteredSummary={filteredSummary}

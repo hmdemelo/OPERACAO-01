@@ -6,8 +6,8 @@ import { Logo } from './Logo';
 
 interface FooterProps {
     config: {
-        instagramUrl: string;
-        youtubeUrl: string;
+        instagramUrl?: string;
+        youtubeUrl?: string;
     };
 }
 

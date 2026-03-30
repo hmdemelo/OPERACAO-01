@@ -20,9 +20,7 @@ export async function GET(req: Request) {
     // Let's stick to simple "current week" first as per spec, or default to current date.
     const { searchParams } = new URL(req.url);
     const dateParam = searchParams.get('date');
-    const targetDate = dateParam ? new Date(dateParam) : new Date();
-
-    const weekStart = getAraguainaStartOfWeek(targetDate); // Consistency with Araguaina Timezone
+    const weekStart = getAraguainaStartOfWeek(dateParam || new Date()); // Pass raw string to avoid UTC midnight shift
 
     const plan = await prisma.weeklyPlan.findUnique({
         where: {
