@@ -9,7 +9,8 @@ import { addDays } from 'date-fns';
 const updateSchema = z.object({
     completed: z.boolean(),
     questionsDone: z.number().int().optional(),
-    correctCount: z.number().int().optional()
+    correctCount: z.number().int().optional(),
+    actualMinutes: z.number().int().min(0).optional(),
 });
 
 export async function PATCH(req: Request, props: { params: Promise<{ itemId: string }> }) {
@@ -22,7 +23,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ itemId: str
 
     try {
         const body = await req.json();
-        const { completed, questionsDone, correctCount } = updateSchema.parse(body);
+        const { completed, questionsDone, correctCount, actualMinutes } = updateSchema.parse(body);
         const { itemId } = params;
 
         // Verify ownership
@@ -108,7 +109,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ itemId: str
             }
 
             // Transaction: Create Log + Update Item
-            const [log, updatedItem] = await prisma.$transaction(async (tx) => {
+            const [, updatedItem] = await prisma.$transaction(async (tx) => {
                 // Create StudyLog
                 const newLog = await tx.studyLog.create({
                     data: {
@@ -117,7 +118,7 @@ export async function PATCH(req: Request, props: { params: Promise<{ itemId: str
                         contentId: contentId,
                         topic: topicName,
                         date: logDate,
-                        hoursStudied: (item.durationMinutes || 0) / 60,
+                        hoursStudied: (actualMinutes ?? item.durationMinutes ?? 0) / 60,
                         questionsAnswered: questionsDone || item.questionsDone || 0,
                         correctAnswers: correctCount ?? item.correctCount ?? 0,
                     }

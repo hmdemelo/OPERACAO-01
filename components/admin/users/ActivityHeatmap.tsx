@@ -55,7 +55,7 @@ export function ActivityHeatmap({
         <div className="flex flex-col gap-2">
             <div className="flex pb-2">
                 <TooltipProvider>
-                    <div className="flex flex-wrap gap-1 w-full">
+                    <div className={`flex flex-wrap ${compact ? 'gap-[2px]' : 'gap-1'} w-full`}>
                         {dates.map((date, index) => {
                             const dData = getDataForDate(date)
                             const hours = dData?.totalHours || 0
@@ -63,12 +63,12 @@ export function ActivityHeatmap({
                             return (
                                 <Fragment key={date.toISOString()}>
                                     {isMonday && index !== 0 && (
-                                        <div className={`w-[2px] bg-orange-500 rounded-full mx-[1px] ${compact ? 'h-2' : 'h-3'}`} />
+                                        <div className={`w-[2px] bg-orange-500 rounded-full mx-[1px] ${compact ? 'h-[6px]' : 'h-3'}`} />
                                     )}
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <div
-                                                className={`${compact ? 'w-2 h-2 rounded-[1px]' : 'w-3 h-3 rounded-sm'} ${getColor(hours)} cursor-pointer hover:ring-2 hover:ring-ring hover:ring-offset-1`}
+                                                className={`${compact ? 'w-[6px] h-[6px] rounded-[1px]' : 'w-3 h-3 rounded-sm'} ${getColor(hours)} cursor-pointer hover:ring-2 hover:ring-ring hover:ring-offset-1`}
                                                 onClick={() => onSquareClick?.(date.toISOString().split('T')[0])}
                                             />
                                         </TooltipTrigger>

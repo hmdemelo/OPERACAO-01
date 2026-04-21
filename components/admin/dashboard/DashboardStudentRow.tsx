@@ -6,7 +6,8 @@ import { ActivityHeatmap } from "@/components/admin/users/ActivityHeatmap"
 import { AdminStudentWeeklyPlan } from "./AdminStudentWeeklyPlan"
 import { Button } from "@/components/ui/button"
 import { TableRow, TableCell } from "@/components/ui/table"
-import { ChevronUp, BarChart2, Loader2, Calendar } from "lucide-react"
+import { ChevronUp, BarChart2, Loader2, Calendar, FileText } from "lucide-react"
+import Link from "next/link"
 
 type DashboardStudentRowProps = {
     user: {
@@ -74,54 +75,57 @@ export function DashboardStudentRow({ user, stats, rank }: DashboardStudentRowPr
                 <TableCell className="text-sm text-right">{stats.questions}</TableCell>
                 <TableCell className="text-sm text-right">{stats.hours.toFixed(1)}h</TableCell>
                 <TableCell className="text-center">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={toggleExpand}
-                        className="gap-2"
-                        disabled={isLoadingHeatmap}
-                    >
-                        {isLoadingHeatmap ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : isExpanded ? (
-                            <ChevronUp className="h-4 w-4" />
-                        ) : (
-                            <BarChart2 className="h-4 w-4" />
-                        )}
-                        {isExpanded ? "Ocultar" : "Ver Atividade"}
-                    </Button>
+                    <div className="flex items-center justify-center gap-1">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={toggleExpand}
+                            className="gap-2"
+                            disabled={isLoadingHeatmap}
+                        >
+                            {isLoadingHeatmap ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : isExpanded ? (
+                                <ChevronUp className="h-4 w-4" />
+                            ) : (
+                                <BarChart2 className="h-4 w-4" />
+                            )}
+                            {isExpanded ? "Ocultar" : "Ver Atividade"}
+                        </Button>
+                        <Link href={`/admin/students/${user.id}/report`}>
+                            <Button variant="ghost" size="sm" className="gap-2">
+                                <FileText className="h-4 w-4" />
+                                Relatório
+                            </Button>
+                        </Link>
+                    </div>
                 </TableCell>
             </TableRow>
 
-            {/* Expanded Content: Heatmap & Inline Details */}
+            {/* Expanded Content: Heatmap & Weekly Plan side-by-side */}
             {isExpanded && (
                 <TableRow className="bg-muted/10 border-b">
                     <TableCell colSpan={6} className="p-0">
-                        <div className="p-6 pl-12 animate-in fade-in slide-in-from-top-2">
-                            <div className="flex flex-col gap-3">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                    Consistência de Estudo (Últimos 60 dias)
-                                </p>
-
-                                <div className="w-full">
+                        <div className="p-4 pl-8 animate-in fade-in slide-in-from-top-2">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                                {/* Left: Heatmap */}
+                                <div className="space-y-2">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                        Consistência (60 dias)
+                                    </p>
                                     <ActivityHeatmap
                                         data={heatmapData}
                                         days={60}
                                         compact={true}
                                         onSquareClick={fetchLogsForDate}
                                     />
+                                    <p className="text-[10px] text-muted-foreground italic">
+                                        Clique em um dia para navegar para aquela semana.
+                                    </p>
                                 </div>
-                                <p className="text-[10px] text-muted-foreground italic">
-                                    * Clique em um dia para ver os detalhes formatados abaixo.
-                                </p>
 
-                                {/* Inline Detail View */}
-                                <div className="mt-8 border-t pt-6 animate-in fade-in slide-in-from-top-2">
-                                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-                                        Cronograma Semanal do Aluno
-                                    </h4>
-                                    <AdminStudentWeeklyPlan userId={user.id} selectedDate={selectedDate} />
-                                </div>
+                                {/* Right: Weekly Plan */}
+                                <AdminStudentWeeklyPlan userId={user.id} selectedDate={selectedDate} />
                             </div>
                         </div>
                     </TableCell>

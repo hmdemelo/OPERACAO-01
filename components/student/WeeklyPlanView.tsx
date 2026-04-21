@@ -2,7 +2,7 @@
 
 import { logger } from "@/lib/logger";
 import { useState } from 'react'
-import { format, addDays, addWeeks, subWeeks, startOfWeek } from 'date-fns'
+import { format, addDays, addWeeks, subWeeks } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { CheckCircle2, Circle, Loader2, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
@@ -34,15 +34,13 @@ interface WeeklyPlan {
 function renderLinks(text: string) {
     if (!text) return null;
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.split(urlRegex).map((part, i) => {
+    return text.split(urlRegex).flatMap((part, i) => {
         if (part.match(urlRegex)) {
-            return (
-                <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="underline hover:invert">
-                    {part}
-                </a>
-            );
+            return [<a key={i} href={part} target="_blank" rel="noopener noreferrer" className="underline hover:invert">{part}</a>];
         }
-        return part;
+        return part.split('\n').flatMap((line, j, arr) =>
+            j < arr.length - 1 ? [line, <br key={`${i}-${j}`} />] : [line]
+        );
     });
 }
 
@@ -76,10 +74,11 @@ export default function WeeklyPlanView() {
     })
 
     const mutation = useMutation({
-        mutationFn: async ({ itemId, currentStatus, correctCount, questionsDone }: { itemId: string, currentStatus: boolean, correctCount?: number, questionsDone?: number }) => {
+        mutationFn: async ({ itemId, currentStatus, correctCount, questionsDone, actualMinutes }: { itemId: string, currentStatus: boolean, correctCount?: number, questionsDone?: number, actualMinutes?: number }) => {
             const payload: any = { completed: !currentStatus }
             if (correctCount !== undefined) payload.correctCount = correctCount
             if (questionsDone !== undefined) payload.questionsDone = questionsDone
+            if (actualMinutes !== undefined) payload.actualMinutes = actualMinutes
 
             const res = await fetch(`/api/student/plan/${itemId}`, {
                 method: 'PATCH',
@@ -109,7 +108,7 @@ export default function WeeklyPlanView() {
 
             return { previousPlan }
         },
-        onError: (err, variables, context) => {
+        onError: (err, _variables, context) => {
             logger.error(err)
             toast.error('Erro ao atualizar status. Tente novamente.')
             if (context?.previousPlan) {
@@ -126,23 +125,19 @@ export default function WeeklyPlanView() {
         if (item.completed) {
             mutation.mutate({ itemId: item.id, currentStatus: item.completed })
         } else {
-            const isQuestions = item.content?.includes("Questões") || item.subject?.name === "Questões";
-            if (isQuestions) {
-                setSelectedItem(item);
-                setModalOpen(true);
-            } else {
-                mutation.mutate({ itemId: item.id, currentStatus: item.completed })
-            }
+            setSelectedItem(item)
+            setModalOpen(true)
         }
     }
 
-    const handleModalSave = (correct: number, total: number) => {
+    const handleModalSave = (correct: number, total: number, actualMinutes: number) => {
         if (selectedItem) {
             mutation.mutate({
                 itemId: selectedItem.id,
                 currentStatus: false,
                 correctCount: correct,
-                questionsDone: total
+                questionsDone: total,
+                actualMinutes,
             })
         }
     }
@@ -265,7 +260,9 @@ export default function WeeklyPlanView() {
                                                 </p>
                                             )}
                                             {item.durationMinutes && (
-                                                <p className="text-xs text-muted-foreground">{item.durationMinutes} min</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Recomendado: {item.durationMinutes} min
+                                                </p>
                                             )}
                                             {item.questionsDone !== null && item.questionsDone !== undefined && (
                                                 <p className="text-xs font-bold text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400 inline-block px-2 py-0.5 rounded mt-1">
@@ -285,7 +282,8 @@ export default function WeeklyPlanView() {
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
                 onSave={handleModalSave}
-                itemContent={selectedItem?.content || "Questões"}
+                itemContent={selectedItem?.content || selectedItem?.subject?.name || "Bloco de estudo"}
+                recommendedMinutes={selectedItem?.durationMinutes}
             />
         </div >
     )

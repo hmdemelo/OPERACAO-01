@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     if (dateParam) {
         const parsed = parseISO(dateParam);
         if (isValid(parsed)) {
-            weekStart = getAraguainaStartOfWeek(parsed);
+            weekStart = getAraguainaStartOfWeek(dateParam);
         }
     }
 

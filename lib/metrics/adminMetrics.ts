@@ -22,17 +22,27 @@ export type StudentPerformance = {
 // --- REPLACED: Updated to support period argument ---
 export type PeriodType = 'week' | 'fortnight' | 'all'
 
-export async function getStudentPerformance(period: PeriodType = 'week', mentorId?: string): Promise<StudentPerformance[]> {
+function getDateRange(period: PeriodType): { startDate: Date; endDate: Date } {
     const endDate = endOfDay(new Date())
     let startDate: Date
-
     if (period === 'fortnight') {
         startDate = startOfDay(subDays(endDate, 15))
     } else if (period === 'all') {
-        startDate = new Date(0) // 1970-01-01
+        startDate = new Date(0)
     } else {
         startDate = getAraguainaStartOfWeek(new Date())
     }
+    return { startDate, endDate }
+}
+
+export async function getStudentPerformance(
+    period: PeriodType = 'week',
+    mentorId?: string,
+    dateOverride?: { startDate: Date; endDate: Date }
+): Promise<StudentPerformance[]> {
+    const { startDate: defaultStart, endDate: defaultEnd } = getDateRange(period)
+    const startDate = dateOverride?.startDate ?? defaultStart
+    const endDate = dateOverride?.endDate ?? defaultEnd
 
     // 1. Fetch students (filtered by mentor if provided)
     const studentWhere: any = { role: "STUDENT", active: true }
@@ -132,12 +142,20 @@ export type DashboardSummary = {
     totalHours: number
     totalQuestions: number
     engagementRate: number
+    riskCount: number
     students: StudentPerformance[]
     alerts: {
         zeroActivity: StudentPerformance[]
         lowAccuracy: StudentPerformance[]
         lowActivity: StudentPerformance[]
     }
+    previous: {
+        avgAccuracy: number
+        totalHours: number
+        totalQuestions: number
+        engagementRate: number
+        activeStudents: number
+    } | null
 }
 
 export async function getDashboardSummary(
@@ -161,6 +179,45 @@ export async function getDashboardSummary(
         ? (activeStudents / totalStudents) * 100
         : 0
 
+    const alerts = {
+        zeroActivity: students.filter(s => s.alerts.zeroHours && s.totalQuestions === 0),
+        lowAccuracy: students.filter(s => s.alerts.lowAccuracy),
+        lowActivity: students.filter(s => s.alerts.lowActivity && !s.alerts.zeroHours),
+    }
+
+    const riskStudentIds = new Set([
+        ...alerts.zeroActivity.map(s => s.id),
+        ...alerts.lowAccuracy.map(s => s.id),
+        ...alerts.lowActivity.map(s => s.id),
+    ])
+    const riskCount = riskStudentIds.size
+
+    let previous: DashboardSummary['previous'] = null
+    if (period !== 'all') {
+        const { startDate } = getDateRange(period)
+        const windowDays = period === 'week' ? 7 : 15
+        const prevEnd = endOfDay(subDays(startDate, 1))
+        const prevStart = startOfDay(subDays(startDate, windowDays))
+
+        const prevStudents = await getStudentPerformance(period, mentorId, {
+            startDate: prevStart,
+            endDate: prevEnd,
+        })
+        const prevActive = prevStudents.filter(s => s.totalQuestions > 0 || s.totalHours > 0)
+        const prevTotalQ = prevStudents.reduce((acc, s) => acc + s.totalQuestions, 0)
+        const prevTotalC = prevStudents.reduce((acc, s) => acc + s.totalCorrect, 0)
+
+        previous = {
+            totalHours: Number(prevStudents.reduce((acc, s) => acc + s.totalHours, 0).toFixed(1)),
+            totalQuestions: prevTotalQ,
+            avgAccuracy: prevTotalQ > 0 ? Number(((prevTotalC / prevTotalQ) * 100).toFixed(1)) : 0,
+            activeStudents: prevActive.length,
+            engagementRate: totalStudents > 0
+                ? Number(((prevActive.length / totalStudents) * 100).toFixed(0))
+                : 0,
+        }
+    }
+
     return {
         totalStudents,
         activeStudents,
@@ -168,12 +225,10 @@ export async function getDashboardSummary(
         totalHours: Number(totalHours.toFixed(1)),
         totalQuestions,
         engagementRate: Number(engagementRate.toFixed(0)),
+        riskCount,
         students,
-        alerts: {
-            zeroActivity: students.filter(s => s.alerts.zeroHours && s.totalQuestions === 0),
-            lowAccuracy: students.filter(s => s.alerts.lowAccuracy),
-            lowActivity: students.filter(s => s.alerts.lowActivity && !s.alerts.zeroHours),
-        },
+        alerts,
+        previous,
     }
 }
 

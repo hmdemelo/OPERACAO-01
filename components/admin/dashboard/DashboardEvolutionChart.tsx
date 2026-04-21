@@ -17,6 +17,19 @@ type WeekData = {
     avgAccuracy: number
     totalQuestions: number
     totalHours: number
+    Tendência?: number
+}
+
+function calcTrendLine(values: number[]): number[] {
+    const n = values.length
+    if (n < 2) return values
+    const sumX = (n * (n - 1)) / 2
+    const sumX2 = (n * (n - 1) * (2 * n - 1)) / 6
+    const sumY = values.reduce((a, v) => a + v, 0)
+    const sumXY = values.reduce((a, v, i) => a + i * v, 0)
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
+    const intercept = (sumY - slope * sumX) / n
+    return values.map((_, i) => parseFloat((intercept + slope * i).toFixed(1)))
 }
 
 function CustomTooltip({ active, payload, label }: any) {
@@ -26,7 +39,7 @@ function CustomTooltip({ active, payload, label }: any) {
             <p className="font-semibold">Semana de {label}</p>
             {payload.map((entry: any) => (
                 <p key={entry.name} style={{ color: entry.color }}>
-                    {entry.name}: {entry.name === "Precisão" ? `${entry.value}%` : entry.value}
+                    {entry.name}: {entry.name === "Precisão" || entry.name === "Tendência" ? `${entry.value}%` : entry.value}
                 </p>
             ))}
         </div>
@@ -50,6 +63,13 @@ export function DashboardEvolutionChart({ data }: { data: WeekData[] }) {
         )
     }
 
+    const chartData = hasData
+        ? (() => {
+            const trendValues = calcTrendLine(data.map(d => d.avgAccuracy))
+            return data.map((d, i) => ({ ...d, Tendência: trendValues[i] }))
+        })()
+        : data
+
     return (
         <div className="rounded-xl border bg-card p-6">
             <div className="flex items-center gap-2 mb-6">
@@ -58,7 +78,7 @@ export function DashboardEvolutionChart({ data }: { data: WeekData[] }) {
                 <span className="text-xs text-muted-foreground ml-auto">Últimas 4 semanas</span>
             </div>
             <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={data} margin={{ top: 5, right: 24, left: 0, bottom: 5 }}>
+                <LineChart data={chartData} margin={{ top: 5, right: 24, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                     <XAxis
                         dataKey="week"
@@ -119,6 +139,16 @@ export function DashboardEvolutionChart({ data }: { data: WeekData[] }) {
                         strokeDasharray="5 5"
                         dot={{ r: 4, fill: "hsl(38, 92%, 50%)" }}
                         activeDot={{ r: 6 }}
+                    />
+                    <Line
+                        yAxisId="right"
+                        dataKey="Tendência"
+                        stroke="#f97316"
+                        strokeWidth={1.5}
+                        strokeDasharray="4 3"
+                        dot={false}
+                        legendType="none"
+                        connectNulls
                     />
                 </LineChart>
             </ResponsiveContainer>

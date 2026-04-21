@@ -2,16 +2,16 @@ import { prisma } from "@/lib/db"
 import { startOfDay, subDays, endOfDay, startOfWeek, format } from "date-fns"
 import { getAraguainaStartOfWeek } from "@/lib/date-utils"
 
-export async function getWeeklySummary(userId: string) {
-    const endDate = endOfDay(new Date())
-    const startDate = getAraguainaStartOfWeek(new Date()) // Start of current week in Araguaina timezone
+export async function getWeeklySummary(userId: string, startDate?: Date, endDate?: Date) {
+    const resolvedEnd = endDate ?? endOfDay(new Date())
+    const resolvedStart = startDate ?? getAraguainaStartOfWeek(new Date())
 
     const aggregations = await prisma.studyLog.aggregate({
         where: {
             userId,
             date: {
-                gte: startDate,
-                lte: endDate,
+                gte: resolvedStart,
+                lte: resolvedEnd,
             },
         },
         _sum: {
@@ -39,16 +39,16 @@ export async function getWeeklySummary(userId: string) {
     }
 }
 
-export async function getDailyProgress(userId: string) {
-    const endDate = endOfDay(new Date())
-    const startDate = getAraguainaStartOfWeek(new Date()) // Start of current week in Araguaina timezone
+export async function getDailyProgress(userId: string, startDate?: Date, endDate?: Date) {
+    const resolvedEnd = endDate ?? endOfDay(new Date())
+    const resolvedStart = startDate ?? getAraguainaStartOfWeek(new Date())
 
     const rawLogs = await prisma.studyLog.findMany({
         where: {
             userId,
             date: {
-                gte: startDate,
-                lte: endDate,
+                gte: resolvedStart,
+                lte: resolvedEnd,
             },
         },
         select: {
@@ -91,11 +91,17 @@ export async function getDailyProgress(userId: string) {
         .sort((a, b) => a.date.localeCompare(b.date))
 }
 
-export async function getSubjectDistribution(userId: string) {
+export async function getSubjectDistribution(userId: string, startDate?: Date, endDate?: Date) {
+    const dateFilter = startDate || endDate ? {
+        ...(startDate && { gte: startDate }),
+        ...(endDate && { lte: endDate }),
+    } : undefined
+
     const subjectStats = await prisma.studyLog.groupBy({
         by: ["subjectId"],
         where: {
             userId,
+            ...(dateFilter && { date: dateFilter }),
         },
         _sum: {
             hoursStudied: true,

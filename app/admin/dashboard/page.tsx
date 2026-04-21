@@ -5,7 +5,8 @@ import { getMentorIdFilter } from "@/lib/auth/superAdmin"
 import {
     getCachedDashboardSummary,
     getCachedSubjectDistributionAll,
-    getCachedWeeklyEvolution
+    getCachedWeeklyEvolution,
+    getCachedScheduleAdherence
 } from "@/lib/metrics/cachedAdminMetrics"
 import { getSetting } from "@/lib/settings"
 import {
@@ -52,10 +53,11 @@ export default async function AdminDashboardPage({
 
     // Mentors only see their own students — except super admins who see all
     const mentorId = getMentorIdFilter({ id: session.user.id, role: session.user.role, email: session.user.email })
-    const [summary, subjectDistribution, weeklyEvolution, mentorWidgetsRaw] = await Promise.all([
+    const [summary, subjectDistribution, weeklyEvolution, scheduleAdherence, mentorWidgetsRaw] = await Promise.all([
         getCachedDashboardSummary(period, mentorId),
         getCachedSubjectDistributionAll(period, mentorId),
         getCachedWeeklyEvolution(mentorId),
+        getCachedScheduleAdherence(mentorId),
         getSetting("mentor_dashboard_widgets"),
     ])
     
@@ -116,7 +118,7 @@ export default async function AdminDashboardPage({
     })
 
     return (
-        <div className="container mx-auto p-6 space-y-6">
+        <div className="mx-auto w-full max-w-[1600px] px-6 py-6 space-y-6">
             {/* Header with Title + Period Filter */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4">
@@ -139,6 +141,9 @@ export default async function AdminDashboardPage({
                     engagementRate={summary.engagementRate}
                     totalQuestions={summary.totalQuestions}
                     activeStudents={summary.activeStudents}
+                    riskCount={summary.riskCount}
+                    planAdherenceAvg={scheduleAdherence.avgAdherence}
+                    previous={summary.previous}
                 />
             )}
 
