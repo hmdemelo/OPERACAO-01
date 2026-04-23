@@ -72,25 +72,27 @@ export async function POST(req: Request) {
             .map((item) => item.id);
 
         await prisma.$transaction(async (tx) => {
-            // Update existing blocks without touching completion state or linked study logs.
-            for (const item of incomingWithId) {
-                await tx.weeklyPlanItem.update({
-                    where: { id: item.id! },
-                    data: {
-                        dayOfWeek: item.dayOfWeek,
-                        blockIndex: item.blockIndex,
-                        subjectId: item.subjectId || null,
-                        content: item.content || null,
-                        notes: item.notes || null,
-                        durationMinutes: item.durationMinutes || null,
-                    },
-                });
-            }
+            // Update existing blocks in parallel — avoids sequential roundtrip accumulation.
+            await Promise.all(
+                incomingWithId.map((item) =>
+                    tx.weeklyPlanItem.update({
+                        where: { id: item.id! },
+                        data: {
+                            dayOfWeek: item.dayOfWeek,
+                            blockIndex: item.blockIndex,
+                            subjectId: item.subjectId || null,
+                            content: item.content || null,
+                            notes: item.notes || null,
+                            durationMinutes: item.durationMinutes || null,
+                        },
+                    })
+                )
+            );
 
-            // Create only brand-new blocks.
-            for (const item of incomingNew) {
-                await tx.weeklyPlanItem.create({
-                    data: {
+            // Create new blocks in a single batched INSERT.
+            if (incomingNew.length > 0) {
+                await tx.weeklyPlanItem.createMany({
+                    data: incomingNew.map((item) => ({
                         planId: plan.id,
                         dayOfWeek: item.dayOfWeek,
                         blockIndex: item.blockIndex,
@@ -98,7 +100,7 @@ export async function POST(req: Request) {
                         content: item.content || null,
                         notes: item.notes || null,
                         durationMinutes: item.durationMinutes || null,
-                    },
+                    })),
                 });
             }
 
@@ -127,6 +129,9 @@ export async function POST(req: Request) {
                     });
                 }
             }
+        }, {
+            maxWait: 10000,
+            timeout: 30000,
         });
 
         const updatedPlan = await prisma.weeklyPlan.findUnique({
