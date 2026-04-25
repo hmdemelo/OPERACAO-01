@@ -2,11 +2,10 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/authOptions"
 import { prisma } from "@/lib/db"
-import { enrichQuestion } from "@/lib/ai/questionAnalyzer"
 import { canReviewQuestion } from "@/lib/auth/questionPermissions"
 import { logger } from "@/lib/logger"
 
-export const maxDuration = 60
+const VALID_ANSWERS = new Set(["A", "B", "C", "D", "E"])
 
 export async function POST(
     req: Request,
@@ -21,33 +20,52 @@ export async function POST(
 
     const permission = await canReviewQuestion(session.user, id)
     if (!permission.allowed) {
-        return NextResponse.json(
-            { error: permission.reason || "Sem permissão" },
-            { status: 403 },
-        )
+        return NextResponse.json({ error: permission.reason || "Sem permissão" }, { status: 403 })
     }
 
     try {
         const body = await req.json().catch(() => ({}))
-        const { subjectId, contentId } = body as { subjectId?: string | null; contentId?: string | null }
+        const {
+            subjectId,
+            contentId,
+            correctAnswer,
+            commentary,
+        } = body as {
+            subjectId?: string | null
+            contentId?: string | null
+            correctAnswer?: string | null
+            commentary?: string | null
+        }
+
+        if (!correctAnswer || !VALID_ANSWERS.has(correctAnswer)) {
+            return NextResponse.json(
+                { error: "Marque a alternativa correta antes de aprovar." },
+                { status: 400 },
+            )
+        }
 
         const existing = await prisma.question.findUnique({
             where: { id },
-            select: { stem: true, alternatives: true },
+            select: { alternatives: true },
         })
         if (!existing) {
             return NextResponse.json({ error: "Questão não encontrada" }, { status: 404 })
         }
 
         const alternatives = existing.alternatives as Record<string, string>
-        const enriched = await enrichQuestion(existing.stem, alternatives)
+        if (!alternatives[correctAnswer]) {
+            return NextResponse.json(
+                { error: `Alternativa ${correctAnswer} está vazia — escolha outra.` },
+                { status: 400 },
+            )
+        }
 
         const updated = await prisma.question.update({
             where: { id },
             data: {
                 status: "APPROVED",
-                correctAnswer: enriched.correctAnswer,
-                commentary: enriched.commentary,
+                correctAnswer,
+                commentary: commentary?.trim() || null,
                 approvedAt: new Date(),
                 approvedById: session.user.id,
                 ...(subjectId !== undefined && { subjectId: subjectId || null }),

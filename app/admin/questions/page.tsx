@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { Loader2, Search, Filter, X, ChevronLeft, ChevronRight, BookOpen } from "lucide-react"
+import { Loader2, Search, Filter, X, ChevronLeft, ChevronRight, BookOpen, FileSpreadsheet } from "lucide-react"
 import { isSuperAdmin } from "@/lib/auth/superAdmin"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select"
 import { QuestionReviewCard, type ReviewQuestion } from "@/components/admin/questions/QuestionReviewCard"
 import { QuestionUploadFAB } from "@/components/QuestionUploadFAB"
+import { BulkUploadDialog } from "@/components/admin/questions/BulkUploadDialog"
 
 type QuestionStatus = "PENDING" | "APPROVED" | "REJECTED"
 
@@ -54,6 +55,7 @@ export default function AdminQuestionsPage() {
     const [searchInput, setSearchInput] = useState(q)
     const [data, setData] = useState<ApiResponse | null>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [bulkOpen, setBulkOpen] = useState(false)
 
     const fetchQuestions = useCallback(async () => {
         setIsLoading(true)
@@ -118,7 +120,17 @@ export default function AdminQuestionsPage() {
                         Revise, aprove e gerencie as questões enviadas.
                     </p>
                 </div>
+                <Button variant="outline" onClick={() => setBulkOpen(true)} className="gap-2 flex-shrink-0">
+                    <FileSpreadsheet className="h-4 w-4" />
+                    Importar em Lote
+                </Button>
             </div>
+
+            <BulkUploadDialog
+                open={bulkOpen}
+                onOpenChange={setBulkOpen}
+                onSuccess={fetchQuestions}
+            />
 
             {/* Status tabs */}
             <div className="flex bg-muted rounded-lg p-1 w-fit">

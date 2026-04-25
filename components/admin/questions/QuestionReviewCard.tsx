@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { CheckCircle2, XCircle, Loader2, Clock, Lock, User } from "lucide-react"
+import { CheckCircle2, XCircle, Loader2, Clock, Lock, User, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import {
     Select,
     SelectContent,
@@ -52,13 +53,49 @@ export function QuestionReviewCard({
 }) {
     const [subjectId, setSubjectId] = useState(question.subjectId || "")
     const [contentId, setContentId] = useState(question.contentId || "")
+    const [correctAnswer, setCorrectAnswer] = useState(question.correctAnswer || "")
+    const [commentary, setCommentary] = useState(question.commentary || "")
+
+    // Tracks whether the current values came from AI suggestion (and weren't yet edited by the user)
+    const [answerFromAI, setAnswerFromAI] = useState(false)
+    const [commentaryFromAI, setCommentaryFromAI] = useState(false)
+
     const [isApproving, setIsApproving] = useState(false)
     const [isRejecting, setIsRejecting] = useState(false)
+    const [isSuggesting, setIsSuggesting] = useState(false)
 
     const isPending = question.status === "PENDING"
     const filteredContents = contents.filter((c) => !subjectId || c.subjectId === subjectId)
 
+    const selectAnswer = (letter: string) => {
+        if (!isPending) return
+        setCorrectAnswer((prev) => (prev === letter ? "" : letter))
+        setAnswerFromAI(false)
+    }
+
+    const handleSuggest = async () => {
+        setIsSuggesting(true)
+        try {
+            const res = await fetch(`/api/admin/questions/${question.id}/suggest`, { method: "POST" })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || "Falha na sugestão")
+            setCorrectAnswer(data.correctAnswer || "")
+            setCommentary(data.commentary || "")
+            setAnswerFromAI(true)
+            setCommentaryFromAI(true)
+            toast.success("Sugestão da IA aplicada — revise antes de aprovar")
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Erro ao consultar IA")
+        } finally {
+            setIsSuggesting(false)
+        }
+    }
+
     const handleApprove = async () => {
+        if (!correctAnswer) {
+            toast.error("Marque a alternativa correta antes de aprovar")
+            return
+        }
         setIsApproving(true)
         try {
             const res = await fetch(`/api/admin/questions/${question.id}/approve`, {
@@ -67,6 +104,8 @@ export function QuestionReviewCard({
                 body: JSON.stringify({
                     subjectId: subjectId || null,
                     contentId: contentId || null,
+                    correctAnswer,
+                    commentary: commentary.trim() || null,
                 }),
             })
             const data = await res.json()
@@ -104,6 +143,8 @@ export function QuestionReviewCard({
         return <span className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">PENDENTE</span>
     }
 
+    const anyBusy = isApproving || isRejecting || isSuggesting
+
     return (
         <div className="border rounded-lg bg-card overflow-hidden">
             <div className="px-4 py-3 border-b bg-muted/30 flex items-center justify-between gap-2 flex-wrap">
@@ -127,25 +168,74 @@ export function QuestionReviewCard({
                 <p className="text-sm whitespace-pre-wrap">{question.stem}</p>
 
                 <div className="space-y-1.5">
-                    {Object.entries(question.alternatives).filter(([, v]) => v).map(([letter, text]) => (
-                        <div
-                            key={letter}
-                            className={`text-sm flex gap-2 rounded px-2 py-1 ${question.correctAnswer === letter ? "bg-green-500/10 border border-green-500/30" : ""}`}
-                        >
-                            <span className="font-bold flex-shrink-0">{letter})</span>
-                            <span className="whitespace-pre-wrap">{text}</span>
-                            {question.correctAnswer === letter && (
-                                <CheckCircle2 className="h-4 w-4 text-green-600 ml-auto flex-shrink-0" />
-                            )}
-                        </div>
-                    ))}
+                    {Object.entries(question.alternatives).filter(([, v]) => v).map(([letter, text]) => {
+                        const isCorrect = correctAnswer === letter
+                        const showAsSuggestion = isCorrect && answerFromAI
+
+                        const baseClasses = "text-sm flex gap-2 rounded px-2 py-1.5 border transition-colors"
+                        let stateClasses = "border-transparent"
+
+                        if (isCorrect && showAsSuggestion) {
+                            stateClasses = "bg-amber-500/10 border-amber-500/40"
+                        } else if (isCorrect) {
+                            stateClasses = "bg-green-500/10 border-green-500/40"
+                        } else if (isPending) {
+                            stateClasses = "border-transparent hover:bg-muted/40 hover:border-border cursor-pointer"
+                        }
+
+                        return (
+                            <div
+                                key={letter}
+                                onClick={() => selectAnswer(letter)}
+                                role={isPending ? "button" : undefined}
+                                className={`${baseClasses} ${stateClasses}`}
+                            >
+                                <span className="font-bold flex-shrink-0">{letter})</span>
+                                <span className="whitespace-pre-wrap flex-1">{text}</span>
+                                {isCorrect && (
+                                    showAsSuggestion ? (
+                                        <Sparkles className="h-4 w-4 text-amber-600 ml-auto flex-shrink-0" />
+                                    ) : (
+                                        <CheckCircle2 className="h-4 w-4 text-green-600 ml-auto flex-shrink-0" />
+                                    )
+                                )}
+                            </div>
+                        )
+                    })}
                 </div>
 
-                {question.commentary && (
-                    <div className="border-l-4 border-primary/50 bg-primary/5 px-3 py-2 rounded-r">
-                        <p className="text-xs font-bold text-primary mb-1">COMENTÁRIO</p>
-                        <p className="text-sm whitespace-pre-wrap">{question.commentary}</p>
+                {isPending ? (
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                            Comentário
+                            {commentaryFromAI && commentary && (
+                                <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-500">
+                                    <Sparkles className="h-3 w-3" /> sugestão da IA
+                                </span>
+                            )}
+                        </label>
+                        <Textarea
+                            value={commentary}
+                            onChange={(e) => {
+                                setCommentary(e.target.value)
+                                setCommentaryFromAI(false)
+                            }}
+                            placeholder="Comentário explicativo (opcional)..."
+                            rows={3}
+                            className={
+                                commentaryFromAI && commentary
+                                    ? "border-amber-500/40 bg-amber-500/5 focus-visible:ring-amber-500/40"
+                                    : ""
+                            }
+                        />
                     </div>
+                ) : (
+                    question.commentary && (
+                        <div className="border-l-4 border-primary/50 bg-primary/5 px-3 py-2 rounded-r">
+                            <p className="text-xs font-bold text-primary mb-1">COMENTÁRIO</p>
+                            <p className="text-sm whitespace-pre-wrap">{question.commentary}</p>
+                        </div>
+                    )
                 )}
 
                 {isPending && (
@@ -188,12 +278,12 @@ export function QuestionReviewCard({
             </div>
 
             {isPending && canApprove && (
-                <div className="px-4 py-3 border-t bg-muted/20 flex justify-end gap-2">
+                <div className="px-4 py-3 border-t bg-muted/20 flex flex-wrap justify-end gap-2">
                     <Button
                         size="sm"
                         variant="outline"
                         onClick={handleReject}
-                        disabled={isApproving || isRejecting}
+                        disabled={anyBusy}
                         className="gap-2"
                     >
                         {isRejecting ? <Loader2 className="h-3 w-3 animate-spin" /> : <XCircle className="h-3 w-3" />}
@@ -201,12 +291,22 @@ export function QuestionReviewCard({
                     </Button>
                     <Button
                         size="sm"
+                        variant="outline"
+                        onClick={handleSuggest}
+                        disabled={anyBusy}
+                        className="gap-2 border-amber-500/40 text-amber-700 hover:bg-amber-500/10 hover:text-amber-700 dark:text-amber-400"
+                    >
+                        {isSuggesting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                        Auxílio de IA
+                    </Button>
+                    <Button
+                        size="sm"
                         onClick={handleApprove}
-                        disabled={isApproving || isRejecting}
+                        disabled={anyBusy || !correctAnswer}
                         className="gap-2"
                     >
                         {isApproving ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
-                        Aprovar com IA
+                        Aprovar
                     </Button>
                 </div>
             )}
