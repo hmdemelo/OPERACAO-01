@@ -21,6 +21,7 @@ import { AccountCard } from "./profile/AccountCard"
 import { PersonalDataCard } from "./profile/PersonalDataCard"
 import { AcademicCard } from "./profile/AcademicCard"
 import { LinksCard } from "./profile/LinksCard"
+import { PreferencesCard } from "./PreferencesCard"
 
 interface ProfileFormProps {
     initialData: any
@@ -153,6 +154,7 @@ export function ProfileForm({
                                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 flex flex-col gap-6">
                                         {isAdmin && <LinksCard />}
                                         <AcademicCard />
+                                        {!isAdmin && !isNew && <PreferencesCard />}
                                     </div>
                                 </TabsContent>
                             </div>

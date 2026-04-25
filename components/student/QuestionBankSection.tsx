@@ -1,9 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { BookOpen, Loader2, Eye, EyeOff, CheckCircle2, Lightbulb } from "lucide-react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { BookOpen, Loader2, Eye, EyeOff, CheckCircle2, Lightbulb, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { toast } from "sonner"
 
 type Question = {
     id: string
@@ -16,19 +19,73 @@ type Question = {
     year: number | null
     subject: { id: string; name: string } | null
     content: { id: string; name: string } | null
+    answered: boolean
+}
+
+// Heuristic: only show source if it doesn't look like an uploaded filename.
+function shouldShowSource(source: string | null): boolean {
+    if (!source) return false
+    const lower = source.toLowerCase()
+    if (/\.(pdf|jpe?g|png|webp|gif)$/i.test(lower)) return false
+    if (lower.includes("/") || lower.includes("\\")) return false
+    return true
 }
 
 function QuestionCard({ question }: { question: Question }) {
+    const queryClient = useQueryClient()
     const [showAnswer, setShowAnswer] = useState(false)
+    const [answered, setAnswered] = useState(question.answered)
+    const [isToggling, setIsToggling] = useState(false)
+
+    const toggleAnswered = async (next: boolean) => {
+        setIsToggling(true)
+        const previous = answered
+        setAnswered(next)
+        try {
+            const res = await fetch(`/api/student/questions/${question.id}/answered`, {
+                method: next ? "POST" : "DELETE",
+            })
+            if (!res.ok) throw new Error("Falha ao atualizar")
+            queryClient.invalidateQueries({ queryKey: ["studentQuestions"] })
+            toast.success(next ? "Marcada como respondida" : "Desmarcada como respondida")
+        } catch (err) {
+            setAnswered(previous)
+            toast.error(err instanceof Error ? err.message : "Erro ao atualizar")
+        } finally {
+            setIsToggling(false)
+        }
+    }
+
+    const showSource = shouldShowSource(question.source)
 
     return (
-        <div className="border rounded-lg bg-card overflow-hidden">
-            <div className="px-4 py-2 border-b bg-muted/30 flex items-center justify-between gap-2">
-                <span className="text-xs font-mono text-muted-foreground">#{question.externalCode}</span>
+        <div className={`border rounded-lg bg-card overflow-hidden transition-opacity ${answered ? "opacity-60" : ""}`}>
+            <div className="px-4 py-2 border-b bg-muted/30 flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {question.source && <span>{question.source}</span>}
+                    <span className="font-mono">#{question.externalCode}</span>
+                    {showSource && <span>• {question.source}</span>}
                     {question.content && <span>• {question.content.name}</span>}
                 </div>
+
+                <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                                <Checkbox
+                                    checked={answered}
+                                    onCheckedChange={(v) => toggleAnswered(!!v)}
+                                    disabled={isToggling}
+                                    className="h-3.5 w-3.5"
+                                />
+                                <span>Questão respondida</span>
+                                <Info className="h-3 w-3 opacity-60" />
+                            </label>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="max-w-xs text-xs">
+                            Ao marcar, esta questão deixa de aparecer aqui. Para vê-la novamente, ative <strong>&ldquo;Exibir questões respondidas&rdquo;</strong> no seu perfil.
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
 
             <div className="p-4 space-y-3">
@@ -91,12 +148,13 @@ export default function QuestionBankSection() {
         queryFn: async () => {
             const res = await fetch("/api/student/questions")
             if (!res.ok) throw new Error("Failed to fetch questions")
-            return res.json() as Promise<{ questions: Question[] }>
+            return res.json() as Promise<{ questions: Question[]; showAnsweredQuestions: boolean }>
         },
         staleTime: 1000 * 60 * 5,
     })
 
     const questions = data?.questions || []
+    const showAnswered = data?.showAnsweredQuestions ?? false
 
     const grouped = questions.reduce<Record<string, Question[]>>((acc, q) => {
         const name = q.subject?.name || "Sem disciplina"
@@ -113,6 +171,7 @@ export default function QuestionBankSection() {
                 {questions.length > 0 && (
                     <span className="text-xs text-muted-foreground ml-2">
                         {questions.length} {questions.length === 1 ? "questão" : "questões"}
+                        {showAnswered && " (incluindo respondidas)"}
                     </span>
                 )}
             </div>
@@ -124,8 +183,16 @@ export default function QuestionBankSection() {
             ) : questions.length === 0 ? (
                 <div className="border rounded-lg bg-card p-8 text-center text-muted-foreground">
                     <BookOpen className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Nenhuma questão disponível para as disciplinas desta semana.</p>
-                    <p className="text-xs mt-1 opacity-70">Use o botão flutuante para enviar questões.</p>
+                    <p className="text-sm">
+                        {showAnswered
+                            ? "Nenhuma questão disponível para as disciplinas desta semana."
+                            : "Nenhuma questão pendente para esta semana."}
+                    </p>
+                    {!showAnswered && (
+                        <p className="text-xs mt-1 opacity-70">
+                            Ative &ldquo;Exibir questões respondidas&rdquo; no perfil para ver as já respondidas.
+                        </p>
+                    )}
                 </div>
             ) : (
                 <div className="space-y-6">

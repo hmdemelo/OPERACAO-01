@@ -12,22 +12,28 @@ export async function GET() {
 
     const weekStart = getAraguainaStartOfWeek(new Date())
 
-    const plan = await prisma.weeklyPlan.findUnique({
-        where: {
-            userId_startDate: {
-                userId: session.user.id,
-                startDate: weekStart,
+    const [user, plan] = await Promise.all([
+        prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { showAnsweredQuestions: true },
+        }),
+        prisma.weeklyPlan.findUnique({
+            where: {
+                userId_startDate: {
+                    userId: session.user.id,
+                    startDate: weekStart,
+                },
             },
-        },
-        select: {
-            items: {
-                select: { subjectId: true },
+            select: {
+                items: {
+                    select: { subjectId: true },
+                },
             },
-        },
-    })
+        }),
+    ])
 
     if (!plan) {
-        return NextResponse.json({ questions: [] })
+        return NextResponse.json({ questions: [], showAnsweredQuestions: user?.showAnsweredQuestions ?? false })
     }
 
     const subjectIds = Array.from(
@@ -35,13 +41,16 @@ export async function GET() {
     )
 
     if (subjectIds.length === 0) {
-        return NextResponse.json({ questions: [] })
+        return NextResponse.json({ questions: [], showAnsweredQuestions: user?.showAnsweredQuestions ?? false })
     }
+
+    const showAnswered = user?.showAnsweredQuestions ?? false
 
     const questions = await prisma.question.findMany({
         where: {
             status: "APPROVED",
             subjectId: { in: subjectIds },
+            ...(showAnswered ? {} : { answers: { none: { userId: session.user.id } } }),
         },
         select: {
             id: true,
@@ -54,6 +63,11 @@ export async function GET() {
             year: true,
             subject: { select: { id: true, name: true } },
             content: { select: { id: true, name: true } },
+            answers: {
+                where: { userId: session.user.id },
+                select: { id: true },
+                take: 1,
+            },
         },
         orderBy: [
             { subject: { name: "asc" } },
@@ -61,5 +75,14 @@ export async function GET() {
         ],
     })
 
-    return NextResponse.json({ questions })
+    const enriched = questions.map((q) => ({
+        ...q,
+        answered: q.answers.length > 0,
+        answers: undefined,
+    }))
+
+    return NextResponse.json({
+        questions: enriched,
+        showAnsweredQuestions: showAnswered,
+    })
 }

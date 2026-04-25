@@ -26,6 +26,7 @@ model User {
   addressState      String?
   dailyHours        Int?
   educationLevel    String?
+  showAnsweredQuestions Boolean       @default(false)
   mentorLinks       MentorshipLink[]  @relation("MentorLinks")
   studentLink       MentorshipLink?   @relation("StudentLinks")
   logs              StudyLog[]
@@ -35,6 +36,7 @@ model User {
   weeklyPlans       WeeklyPlan[]
   uploadedQuestions Question[]        @relation("QuestionUploader")
   approvedQuestions Question[]        @relation("QuestionApprover")
+  questionAnswers   QuestionAnswer[]
 }
 
 model MentorshipLink {
@@ -274,8 +276,21 @@ model Question {
   approvedAt    DateTime?
   approvedById  String?
   approvedBy    User?          @relation("QuestionApprover", fields: [approvedById], references: [id])
+  answers       QuestionAnswer[]
 
   @@index([status])
   @@index([subjectId])
   @@index([contentId])
+}
+
+model QuestionAnswer {
+  id         String   @id @default(cuid())
+  userId     String
+  questionId String
+  answeredAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+  @@index([userId])
 }
