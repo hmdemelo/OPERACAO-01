@@ -1,5 +1,3 @@
-
-import { logger } from "@/lib/logger";
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
@@ -61,56 +59,31 @@ export async function PATCH(req: Request) {
     try {
         const body = await req.json();
 
-        // DEBUG LOGGING
-        const fs = require('fs');
-        const path = require('path');
-        const log = (msg: string) => {
-            logger.info(msg);
-            fs.appendFileSync(path.join(process.cwd(), 'debug_profile.log'), msg + '\n');
-        };
-
-        log(`[${new Date().toISOString()}] PATCH /api/user/profile`);
-        log(`User ID: ${session.user.id}`);
-        log(`Body Received: ${JSON.stringify(body)}`);
-
-        // ZOD VALIDATION CHECK
         const result = profileSchema.safeParse(body);
 
         if (!result.success) {
-            log(`ZOD ERROR: ${JSON.stringify(result.error.flatten())}`);
             return NextResponse.json({ error: result.error.flatten() }, { status: 400 });
         }
 
         const data = result.data;
-        log(`Normalized Data for Update: ${JSON.stringify(data)}`);
 
-        log("BEFORE UPDATE (Prisma Call Starting...)");
+        const updatedUser = await prisma.user.update({
+            where: { id: session.user.id },
+            data: {
+                name: data.name,
+                phone: data.phone,
+                cpf: data.cpf,
+                birthDate: data.birthDate,
+                targetExam: data.targetExam,
+                educationLevel: data.educationLevel,
+                dailyHours: data.dailyHours,
+                addressCity: data.addressCity,
+                addressState: data.addressState,
+            }
+        });
 
-        try {
-            const updatedUser = await prisma.user.update({
-                where: { id: session.user.id },
-                data: {
-                    name: data.name,
-                    phone: data.phone,
-                    cpf: data.cpf,
-                    birthDate: data.birthDate,
-                    targetExam: data.targetExam,
-                    educationLevel: data.educationLevel,
-                    dailyHours: data.dailyHours,
-                    addressCity: data.addressCity,
-                    addressState: data.addressState,
-                }
-            });
-
-            log(`AFTER UPDATE: Success! Updated User: ${JSON.stringify(updatedUser)}`);
-            revalidatePath('/student/profile');
-            log(`Revalidated path /student/profile`);
-
-            return NextResponse.json(updatedUser);
-        } catch (dbError) {
-            log(`DB UPDATE ERROR: ${dbError}`);
-            throw dbError; // Let outer catch handle 500
-        }
+        revalidatePath('/student/profile');
+        return NextResponse.json(updatedUser);
     } catch (error) {
         logger.error("Profile update error:", error);
         if (error instanceof z.ZodError) {
