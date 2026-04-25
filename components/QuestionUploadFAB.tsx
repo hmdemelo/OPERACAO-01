@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Plus, Upload, Loader2, X, FileText, Image as ImageIcon } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -19,7 +19,15 @@ export function QuestionUploadFAB() {
     const [file, setFile] = useState<File | null>(null)
     const [source, setSource] = useState("")
     const [isUploading, setIsUploading] = useState(false)
+    const [uploadEnabled, setUploadEnabled] = useState<boolean | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    useEffect(() => {
+        fetch("/api/questions/upload-enabled")
+            .then((r) => r.json())
+            .then((d) => setUploadEnabled(d.enabled ?? false))
+            .catch(() => setUploadEnabled(false))
+    }, [])
 
     const reset = () => {
         setFile(null)
@@ -58,6 +66,8 @@ export function QuestionUploadFAB() {
             setIsUploading(false)
         }
     }
+
+    if (!uploadEnabled) return null
 
     return (
         <>

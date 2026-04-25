@@ -38,6 +38,7 @@ import {
     CheckCircle2,
     XCircle,
     Lock,
+    Upload,
 } from "lucide-react"
 
 type Settings = {
@@ -52,6 +53,7 @@ type Settings = {
     ai_provider: string
     ai_model: string
     ai_api_key: string
+    student_upload_enabled: string
 }
 
 type Stats = {
@@ -129,6 +131,7 @@ export default function AdminSettingsPage() {
         ai_provider: "anthropic",
         ai_model: "claude-opus-4-7",
         ai_api_key: "",
+        student_upload_enabled: "true",
     })
 
     const [isTestingAI, setIsTestingAI] = useState(false)
@@ -501,6 +504,45 @@ export default function AdminSettingsPage() {
                         >
                             {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
                             Salvar IA
+                        </Button>
+                    </div>
+                </div>
+            </Section>
+
+            <Section
+                icon={Upload}
+                title="Banco de Questões"
+                description="Controle o envio de questões pelos alunos"
+            >
+                <div className="space-y-4">
+                    {!isMaster && (
+                        <div className="border border-amber-500/30 bg-amber-500/5 rounded-lg p-3 flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+                            <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <p>Apenas o <strong>admin master</strong> pode alterar esta configuração.</p>
+                        </div>
+                    )}
+                    <div className="flex items-center justify-between border rounded-lg p-4 bg-muted/10">
+                        <div>
+                            <p className="font-medium text-sm">Envio de questões pelos alunos</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Quando desativado, o botão de upload some da interface do aluno. A visualização do banco de questões continua disponível.
+                            </p>
+                        </div>
+                        <Switch
+                            checked={form.student_upload_enabled === "true"}
+                            onCheckedChange={(val) => set("student_upload_enabled", val ? "true" : "false")}
+                            disabled={!isMaster}
+                        />
+                    </div>
+                    <div className="flex justify-end pt-1">
+                        <Button
+                            size="sm"
+                            onClick={() => saveSection(["student_upload_enabled"])}
+                            disabled={isSaving || !isMaster}
+                            className="gap-2"
+                        >
+                            {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                            Salvar
                         </Button>
                     </div>
                 </div>
