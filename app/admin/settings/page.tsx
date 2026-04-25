@@ -431,6 +431,7 @@ export default function AdminSettingsPage() {
                                 <SelectContent>
                                     <SelectItem value="anthropic">Anthropic (Claude)</SelectItem>
                                     <SelectItem value="openai">OpenAI (GPT)</SelectItem>
+                                    <SelectItem value="google">Google (Gemini)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -441,7 +442,11 @@ export default function AdminSettingsPage() {
                             <Input
                                 value={form.ai_model}
                                 onChange={(e) => set("ai_model", e.target.value)}
-                                placeholder={form.ai_provider === "anthropic" ? "claude-opus-4-7" : "gpt-4o"}
+                                placeholder={
+                                    form.ai_provider === "anthropic" ? "claude-opus-4-7" :
+                                    form.ai_provider === "google" ? "gemini-2.0-flash" :
+                                    "gpt-4o"
+                                }
                                 disabled={!isMaster}
                             />
                         </div>
@@ -453,7 +458,11 @@ export default function AdminSettingsPage() {
                                 type="password"
                                 value={form.ai_api_key}
                                 onChange={(e) => set("ai_api_key", e.target.value)}
-                                placeholder={form.ai_provider === "anthropic" ? "sk-ant-..." : "sk-..."}
+                                placeholder={
+                                    form.ai_provider === "anthropic" ? "sk-ant-..." :
+                                    form.ai_provider === "google" ? "AIza..." :
+                                    "sk-..."
+                                }
                                 autoComplete="off"
                                 disabled={!isMaster}
                             />

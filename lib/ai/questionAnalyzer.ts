@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk"
 import OpenAI from "openai"
+import { GoogleGenAI } from "@google/genai"
 import { getSetting } from "@/lib/settings"
 
 export type ExtractedQuestion = {
@@ -87,6 +88,8 @@ function stripJsonFence(text: string): string {
     return text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim()
 }
 
+// ── Anthropic ────────────────────────────────────────────────────────────────
+
 async function callAnthropicVision(
     apiKey: string,
     model: string,
@@ -118,21 +121,11 @@ async function callAnthropicVision(
     const response = await client.messages.create({
         model,
         max_tokens: 2048,
-        messages: [
-            {
-                role: "user",
-                content: [
-                    contentBlock,
-                    { type: "text", text: prompt },
-                ],
-            },
-        ],
+        messages: [{ role: "user", content: [contentBlock, { type: "text", text: prompt }] }],
     })
 
     const first = response.content[0]
-    if (first.type !== "text") {
-        throw new Error("Resposta da IA não contém texto.")
-    }
+    if (first.type !== "text") throw new Error("Resposta da IA não contém texto.")
     return first.text
 }
 
@@ -144,11 +137,11 @@ async function callAnthropicText(apiKey: string, model: string, prompt: string):
         messages: [{ role: "user", content: prompt }],
     })
     const first = response.content[0]
-    if (first.type !== "text") {
-        throw new Error("Resposta da IA não contém texto.")
-    }
+    if (first.type !== "text") throw new Error("Resposta da IA não contém texto.")
     return first.text
 }
+
+// ── OpenAI ───────────────────────────────────────────────────────────────────
 
 async function callOpenAIVision(
     apiKey: string,
@@ -191,6 +184,50 @@ async function callOpenAIText(apiKey: string, model: string, prompt: string): Pr
     return text
 }
 
+// ── Google Gemini ─────────────────────────────────────────────────────────────
+
+async function callGoogleVision(
+    apiKey: string,
+    model: string,
+    prompt: string,
+    fileBase64: string,
+    mimeType: string,
+): Promise<string> {
+    const client = new GoogleGenAI({ apiKey })
+
+    const response = await client.models.generateContent({
+        model,
+        contents: [
+            {
+                role: "user",
+                parts: [
+                    { inlineData: { mimeType, data: fileBase64 } },
+                    { text: prompt },
+                ],
+            },
+        ],
+    })
+
+    const text = response.text
+    if (!text) throw new Error("Resposta da IA vazia.")
+    return text
+}
+
+async function callGoogleText(apiKey: string, model: string, prompt: string): Promise<string> {
+    const client = new GoogleGenAI({ apiKey })
+
+    const response = await client.models.generateContent({
+        model,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+    })
+
+    const text = response.text
+    if (!text) throw new Error("Resposta da IA vazia.")
+    return text
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
 export async function extractQuestion(
     fileBuffer: Buffer,
     mimeType: string,
@@ -206,6 +243,8 @@ export async function extractQuestion(
         raw = await callAnthropicVision(apiKey, model, prompt, fileBase64, mimeType)
     } else if (provider === "openai") {
         raw = await callOpenAIVision(apiKey, model, prompt, fileBase64, mimeType)
+    } else if (provider === "google") {
+        raw = await callGoogleVision(apiKey, model, prompt, fileBase64, mimeType)
     } else {
         throw new Error(`Provedor de IA desconhecido: ${provider}`)
     }
@@ -218,7 +257,6 @@ export async function extractQuestion(
         throw new Error(`Resposta da IA não é JSON válido: ${json.slice(0, 200)}`)
     }
 
-    // Guard: subjectId/contentId must exist in our lists, otherwise null them out
     const subjectIds = new Set(subjects.map((s) => s.id))
     const contentIds = new Set(contents.map((c) => c.id))
     if (parsed.subjectId && !subjectIds.has(parsed.subjectId)) parsed.subjectId = null
@@ -239,6 +277,8 @@ export async function enrichQuestion(
         raw = await callAnthropicText(apiKey, model, prompt)
     } else if (provider === "openai") {
         raw = await callOpenAIText(apiKey, model, prompt)
+    } else if (provider === "google") {
+        raw = await callGoogleText(apiKey, model, prompt)
     } else {
         throw new Error(`Provedor de IA desconhecido: ${provider}`)
     }
@@ -258,6 +298,8 @@ export async function testAIConnection(): Promise<{ ok: true } | { ok: false; er
             await callAnthropicText(apiKey, model, "Responda apenas com a palavra: OK")
         } else if (provider === "openai") {
             await callOpenAIText(apiKey, model, "Responda apenas com a palavra: OK")
+        } else if (provider === "google") {
+            await callGoogleText(apiKey, model, "Responda apenas com a palavra: OK")
         } else {
             return { ok: false, error: `Provedor desconhecido: ${provider}` }
         }
