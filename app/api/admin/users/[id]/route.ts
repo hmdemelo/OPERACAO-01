@@ -3,6 +3,7 @@ import { logger } from "@/lib/logger";
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/authOptions"
 import { prisma } from "@/lib/db"
+import { isMasterAdmin } from "@/lib/auth/superAdmin"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
@@ -85,6 +86,26 @@ export async function PATCH(
         const json = await req.json()
         const body = updateUserSchema.parse(json)
         const { id } = await params
+
+        // Security: only master admin can edit other ADMINs or change roles
+        const targetUser = await prisma.user.findUnique({
+            where: { id },
+            select: { role: true },
+        })
+
+        if (!targetUser) {
+            return new NextResponse("Usuário não encontrado", { status: 404 })
+        }
+
+        const isMaster = isMasterAdmin(session.user)
+
+        if (targetUser.role === "ADMIN" && id !== session.user.id && !isMaster) {
+            return new NextResponse("Apenas o admin master pode editar outro administrador", { status: 403 })
+        }
+
+        if (body.role && body.role !== targetUser.role && !isMaster) {
+            return new NextResponse("Apenas o admin master pode alterar perfis de acesso", { status: 403 })
+        }
 
         // Delete existing relations
         if (body.subjectIds !== undefined) {

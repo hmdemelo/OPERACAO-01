@@ -5,7 +5,7 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db"
 import { ProfileForm } from "@/components/student/ProfileForm"
 import { Role } from "@prisma/client"
-import { getMentorIdFilter } from "@/lib/auth/superAdmin"
+import { getMentorIdFilter, isMasterAdmin } from "@/lib/auth/superAdmin"
 
 export default async function AdminUserEditPage({ params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions)
@@ -46,6 +46,25 @@ export default async function AdminUserEditPage({ params }: { params: Promise<{ 
 
     if (!user) {
         return <div className="p-8">Usuário não encontrado</div>
+    }
+
+    // SECURITY GUARD: only master admin can edit other ADMINs
+    if (
+        user.role === "ADMIN" &&
+        id !== session.user.id &&
+        !isMasterAdmin({ role: session.user.role, email: session.user.email })
+    ) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 text-center h-screen space-y-4">
+                <h2 className="text-2xl font-bold text-destructive">Acesso Negado</h2>
+                <p className="text-muted-foreground">
+                    Apenas o admin master pode editar outro administrador.
+                </p>
+                <a href="/admin/users" className="text-primary hover:underline">
+                    Voltar para Usuários
+                </a>
+            </div>
+        )
     }
 
     // SECURITY GUARD: Ensure mentor is not trying to edit another mentor's student

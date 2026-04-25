@@ -32,3 +32,14 @@ export function getMentorIdFilter(user: {
     if (isSuperAdmin(user.email)) return undefined
     return user.id
 }
+
+/**
+ * Master Admin: ADMIN role + email in the super admin whitelist.
+ * Only the master admin can edit other ADMINs, change roles, or reset users.
+ */
+export function isMasterAdmin(user: {
+    role: string
+    email?: string | null
+}): boolean {
+    return user.role === 'ADMIN' && isSuperAdmin(user.email)
+}

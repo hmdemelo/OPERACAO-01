@@ -16,6 +16,9 @@ export const SETTING_DEFAULTS: Record<string, string> = {
         performance_table: true,
         system_alerts: true
     }),
+    ai_provider: "anthropic",
+    ai_model: "claude-opus-4-7",
+    ai_api_key: "",
 }
 
 export const SETTING_KEYS = Object.keys(SETTING_DEFAULTS)

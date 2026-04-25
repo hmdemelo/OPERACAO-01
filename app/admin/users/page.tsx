@@ -27,8 +27,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { Pencil, KeyRound, Search, ArrowUpDown, ArrowUp, ArrowDown, UserPlus, Trash2 } from "lucide-react"
+import { Pencil, KeyRound, Search, ArrowUpDown, ArrowUp, ArrowDown, UserPlus, Trash2, RotateCcw, Crown } from "lucide-react"
 import { PaginationControls } from "@/components/ui/pagination-controls"
+import { isSuperAdmin } from "@/lib/auth/superAdmin"
 
 type User = {
     id: string
@@ -62,6 +63,13 @@ export default function AdminUsersPage() {
     // Delete State
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
+
+    // Reset State (master admin only)
+    const [resetTarget, setResetTarget] = useState<User | null>(null)
+    const [resetConfirmName, setResetConfirmName] = useState("")
+    const [isResetting, setIsResetting] = useState(false)
+
+    const isMaster = session?.user?.role === "ADMIN" && isSuperAdmin(session?.user?.email)
 
     // Filter State
     const [showInactive, setShowInactive] = useState(false)
@@ -167,6 +175,37 @@ export default function AdminUsersPage() {
             setNewPassword("")
         } catch (error) {
             toast.error("Erro ao redefinir senha")
+        }
+    }
+
+    const onResetUser = async () => {
+        if (!resetTarget) return
+        if (resetConfirmName.trim() !== (resetTarget.name || "").trim()) {
+            toast.error("O nome digitado não confere")
+            return
+        }
+        setIsResetting(true)
+        try {
+            const res = await fetch(`/api/admin/users/${resetTarget.id}/reset`, {
+                method: "POST",
+            })
+            if (!res.ok) {
+                const msg = await res.text()
+                throw new Error(msg || "Falha ao resetar usuário")
+            }
+            const data = await res.json()
+            const { plans, logs, subjects, concursos } = data.deleted
+            toast.success(
+                `Usuário resetado: ${logs} logs, ${plans} planos, ${subjects} matérias, ${concursos} concursos apagados`
+            )
+            setResetTarget(null)
+            setResetConfirmName("")
+            fetchUsers()
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : "Erro ao resetar usuário"
+            toast.error(msg)
+        } finally {
+            setIsResetting(false)
         }
     }
 
@@ -309,7 +348,19 @@ export default function AdminUsersPage() {
                         ) : (
                             processedUsers.map((user) => (
                                 <TableRow key={user.id} className="group hover:bg-muted/30 transition-colors">
-                                    <TableCell className="font-medium">{user.name || "-"}</TableCell>
+                                    <TableCell className="font-medium">
+                                        <div className="flex items-center gap-2">
+                                            <span>{user.name || "-"}</span>
+                                            {user.role === "ADMIN" && isSuperAdmin(user.email) && (
+                                                <span
+                                                    title="Admin Master"
+                                                    className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2 py-0.5 text-[10px] font-bold uppercase"
+                                                >
+                                                    <Crown className="h-3 w-3" /> Master
+                                                </span>
+                                            )}
+                                        </div>
+                                    </TableCell>
                                     <TableCell className="text-muted-foreground">{user.email}</TableCell>
                                     <TableCell>
                                         <Badge
@@ -351,28 +402,49 @@ export default function AdminUsersPage() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => router.push(`/admin/users/${user.id}`)}
-                                                className="h-8 w-8"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => setPasswordResetId(user.id)}
-                                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                            >
-                                                <KeyRound className="h-4 w-4" />
-                                            </Button>
+                                            {(user.role !== "ADMIN" || user.id === session?.user?.id || isMaster) && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => router.push(`/admin/users/${user.id}`)}
+                                                    className="h-8 w-8"
+                                                    title="Editar"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                            {(user.role !== "ADMIN" || user.id === session?.user?.id || isMaster) && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => setPasswordResetId(user.id)}
+                                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                    title="Redefinir senha"
+                                                >
+                                                    <KeyRound className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                            {isMaster && user.role === "STUDENT" && user.id !== session?.user?.id && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setResetTarget(user)
+                                                        setResetConfirmName("")
+                                                    }}
+                                                    className="h-8 w-8 text-muted-foreground hover:text-amber-600"
+                                                    title="Resetar histórico do aluno"
+                                                >
+                                                    <RotateCcw className="h-4 w-4" />
+                                                </Button>
+                                            )}
                                             {user.id !== session?.user?.id && user.role !== "ADMIN" && user.active && (
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
                                                     onClick={() => setDeleteTargetId(user.id)}
                                                     className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                    title="Desativar"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
@@ -418,6 +490,70 @@ export default function AdminUsersPage() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setPasswordResetId(null)}>Cancelar</Button>
                         <Button onClick={onResetPassword}>Atualizar Senha</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Reset User Dialog (master admin only) */}
+            <Dialog
+                open={!!resetTarget}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setResetTarget(null)
+                        setResetConfirmName("")
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-destructive">
+                            <RotateCcw className="h-4 w-4" /> Resetar histórico do aluno
+                        </DialogTitle>
+                        <DialogDescription>
+                            Esta ação é <strong>irreversível</strong>. Será apagado:
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-2 space-y-3">
+                        <ul className="text-sm space-y-1 list-disc list-inside text-muted-foreground bg-muted/40 rounded p-3">
+                            <li>Todos os logs de estudo e histórico de edições</li>
+                            <li>Todos os planos semanais (cronogramas)</li>
+                            <li>Disciplinas e concursos associados</li>
+                            <li>Vínculo com mentor</li>
+                            <li>Questões enviadas pelo aluno (pendentes/rejeitadas)</li>
+                        </ul>
+                        <p className="text-sm">
+                            A conta de <strong>{resetTarget?.name}</strong> permanecerá ativa, apenas o histórico será zerado.
+                        </p>
+                        <div className="space-y-1">
+                            <Label className="text-xs">
+                                Para confirmar, digite o nome do aluno: <span className="font-bold">{resetTarget?.name}</span>
+                            </Label>
+                            <Input
+                                value={resetConfirmName}
+                                onChange={(e) => setResetConfirmName(e.target.value)}
+                                placeholder="Nome do aluno"
+                                disabled={isResetting}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setResetTarget(null)
+                                setResetConfirmName("")
+                            }}
+                            disabled={isResetting}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={onResetUser}
+                            disabled={isResetting || resetConfirmName.trim() !== (resetTarget?.name || "").trim()}
+                        >
+                            {isResetting ? "Resetando..." : "Resetar histórico"}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

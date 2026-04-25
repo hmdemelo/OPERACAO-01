@@ -53,3 +53,4 @@ HOMEPAGE_AUDIT.md
 # Database dumps
 *.sql
 dump_prod.sql
+!prisma/migrations/**/*.sql

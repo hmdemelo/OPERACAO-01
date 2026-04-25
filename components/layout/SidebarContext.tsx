@@ -14,15 +14,19 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     const [isCollapsed, setIsCollapsed] = useState(false)
     const [isMobileOpen, setMobileOpen] = useState(false)
 
-    // Use useEffect to access localStorage on the client side only
     useEffect(() => {
-        // Check if window is defined (it should be in useEffect, but good practice)
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('sidebar-collapsed')
             setTimeout(() => {
                 if (saved) setIsCollapsed(saved === 'true')
             }, 0)
         }
+    }, [])
+
+    // Prevent body scroll — all scrolling happens inside <main>
+    useEffect(() => {
+        document.body.style.overflow = 'hidden'
+        return () => { document.body.style.overflow = '' }
     }, [])
 
     const toggleSidebar = () => {

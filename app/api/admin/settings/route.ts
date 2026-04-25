@@ -2,7 +2,10 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/authOptions"
 import { NextResponse } from "next/server"
 import { getAllSettings, setManySettings, SETTING_KEYS } from "@/lib/settings"
+import { isMasterAdmin } from "@/lib/auth/superAdmin"
 import { z } from "zod"
+
+const AI_KEYS = ["ai_provider", "ai_model", "ai_api_key"]
 
 const patchSchema = z.object({
     settings: z.array(
@@ -43,6 +46,15 @@ export async function PATCH(req: Request) {
             return new NextResponse(
                 `Chaves inválidas: ${invalidKeys.map((k) => k.key).join(", ")}`,
                 { status: 400 }
+            )
+        }
+
+        // Security: AI keys can only be modified by the master admin
+        const touchesAI = settings.some((s) => AI_KEYS.includes(s.key))
+        if (touchesAI && !isMasterAdmin(session.user)) {
+            return new NextResponse(
+                "Apenas o admin master pode alterar configurações de IA",
+                { status: 403 }
             )
         }
 

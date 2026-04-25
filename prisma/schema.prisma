@@ -9,30 +9,32 @@ datasource db {
 }
 
 model User {
-  id              String            @id @default(uuid())
-  name            String
-  email           String            @unique
-  passwordHash    String
-  role            Role              @default(STUDENT)
-  phone           String?
-  cpf             String?
-  birthDate       DateTime?
-  targetExam      String?
-  notes           String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  active          Boolean           @default(true)
-  addressCity     String?
-  addressState    String?
-  dailyHours      Int?
-  educationLevel  String?
-  mentorLinks     MentorshipLink[]  @relation("MentorLinks")
-  studentLink     MentorshipLink?   @relation("StudentLinks")
-  logs            StudyLog[]
-  authoredHistory StudyLogHistory[] @relation("HistoryAuthor")
-  userConcursos   UserConcurso[]
-  userSubjects    UserSubject[]
-  weeklyPlans     WeeklyPlan[]
+  id                String            @id @default(uuid())
+  name              String
+  email             String            @unique
+  passwordHash      String
+  role              Role              @default(STUDENT)
+  phone             String?
+  cpf               String?
+  birthDate         DateTime?
+  targetExam        String?
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  active            Boolean           @default(true)
+  addressCity       String?
+  addressState      String?
+  dailyHours        Int?
+  educationLevel    String?
+  mentorLinks       MentorshipLink[]  @relation("MentorLinks")
+  studentLink       MentorshipLink?   @relation("StudentLinks")
+  logs              StudyLog[]
+  authoredHistory   StudyLogHistory[] @relation("HistoryAuthor")
+  userConcursos     UserConcurso[]
+  userSubjects      UserSubject[]
+  weeklyPlans       WeeklyPlan[]
+  uploadedQuestions Question[]        @relation("QuestionUploader")
+  approvedQuestions Question[]        @relation("QuestionApprover")
 }
 
 model MentorshipLink {
@@ -79,6 +81,7 @@ model Subject {
   studyLogs   StudyLog[]
   users       UserSubject[]
   planItems   WeeklyPlanItem[]
+  questions   Question[]
 }
 
 model Content {
@@ -89,6 +92,7 @@ model Content {
   description String?    @db.VarChar(2048)
   subject     Subject    @relation(fields: [subjectId], references: [id])
   studyLogs   StudyLog[]
+  questions   Question[]
 
   @@index([subjectId])
 }
@@ -237,4 +241,41 @@ model ChangelogEntry {
   updatedAt DateTime @updatedAt
 
   @@index([createdAt])
+}
+
+enum QuestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Question {
+  id            String         @id @default(cuid())
+  externalCode  Int            @unique @default(autoincrement())
+  status        QuestionStatus @default(PENDING)
+
+  subjectId     String?
+  subject       Subject?       @relation(fields: [subjectId], references: [id])
+  contentId     String?
+  content       Content?       @relation(fields: [contentId], references: [id])
+
+  stem          String         @db.Text
+  alternatives  Json
+  correctAnswer String?
+  commentary    String?        @db.Text
+
+  source        String?
+  year          Int?
+
+  uploadedById  String
+  uploadedBy    User           @relation("QuestionUploader", fields: [uploadedById], references: [id])
+
+  createdAt     DateTime       @default(now())
+  approvedAt    DateTime?
+  approvedById  String?
+  approvedBy    User?          @relation("QuestionApprover", fields: [approvedById], references: [id])
+
+  @@index([status])
+  @@index([subjectId])
+  @@index([contentId])
 }

@@ -42,6 +42,8 @@ export async function GET(req: Request) {
         const activeFilter = showInactive ? {} : { active: true }
         const mentorId = getMentorIdFilter({ id: session.user.id, role: session.user.role, email: session.user.email })
 
+        // ADMIN sees everyone; MENTOR filtered by super-admin status sees everyone;
+        // regular MENTOR sees only themselves + their own students
         const whereClause = mentorId
             ? {
                 ...activeFilter,
@@ -50,16 +52,7 @@ export async function GET(req: Request) {
                     { studentLink: { mentorId } } as any,
                 ]
             }
-            : {
-                ...activeFilter,
-                OR: [
-                    { id: session.user.id },
-                    { role: "ADMIN" as any },
-                    { role: "MENTOR" as any },
-                    { studentLink: { mentorId: session.user.id } } as any,
-                    { studentLink: { is: null } } as any,
-                ]
-            };
+            : activeFilter;
 
         const [users, total] = await prisma.$transaction([
             prisma.user.findMany({

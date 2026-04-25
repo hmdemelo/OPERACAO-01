@@ -1,12 +1,21 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
+import { isSuperAdmin } from "@/lib/auth/superAdmin"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import {
     Building2,
     Shield,
@@ -24,6 +33,11 @@ import {
     Linkedin,
     ExternalLink,
     RefreshCw,
+    Sparkles,
+    Key,
+    CheckCircle2,
+    XCircle,
+    Lock,
 } from "lucide-react"
 
 type Settings = {
@@ -35,6 +49,9 @@ type Settings = {
     session_max_age: string
     maintenance_mode: string
     mentor_dashboard_widgets: string
+    ai_provider: string
+    ai_model: string
+    ai_api_key: string
 }
 
 type Stats = {
@@ -89,6 +106,10 @@ function StatCard({ icon: Icon, label, value, sub }: {
 
 // ── Main page ────────────────────────────────────────────────────────────────
 export default function AdminSettingsPage() {
+    const { data: session } = useSession()
+    const isMaster =
+        session?.user?.role === "ADMIN" && isSuperAdmin(session?.user?.email)
+
     const [, setSettings] = useState<Settings | null>(null)
     const [stats, setStats] = useState<Stats | null>(null)
     const [isLoading, setIsLoading] = useState(true)
@@ -105,7 +126,13 @@ export default function AdminSettingsPage() {
         session_max_age: "86400",
         maintenance_mode: "false",
         mentor_dashboard_widgets: "{}",
+        ai_provider: "anthropic",
+        ai_model: "claude-opus-4-7",
+        ai_api_key: "",
     })
+
+    const [isTestingAI, setIsTestingAI] = useState(false)
+    const [aiTestResult, setAiTestResult] = useState<{ ok: boolean; error?: string } | null>(null)
 
     const fetchSettings = async () => {
         setIsLoading(true)
@@ -187,6 +214,28 @@ export default function AdminSettingsPage() {
     const toggleWidget = (key: keyof typeof mentorWidgets) => {
         const next = { ...mentorWidgets, [key]: !mentorWidgets[key] }
         set("mentor_dashboard_widgets", JSON.stringify(next))
+    }
+
+    const testAIConnection = async () => {
+        setIsTestingAI(true)
+        setAiTestResult(null)
+        try {
+            // Save first to ensure backend reads current form values
+            await saveSection(["ai_provider", "ai_model", "ai_api_key"])
+            const res = await fetch("/api/admin/settings/test-ai", { method: "POST" })
+            const data = await res.json()
+            setAiTestResult(data)
+            if (data.ok) {
+                toast.success("Conexão com IA funcionando")
+            } else {
+                toast.error("Falha no teste de IA")
+            }
+        } catch {
+            setAiTestResult({ ok: false, error: "Erro de rede" })
+            toast.error("Erro ao testar conexão")
+        } finally {
+            setIsTestingAI(false)
+        }
     }
 
     if (isLoading) {
@@ -346,6 +395,103 @@ export default function AdminSettingsPage() {
                         >
                             {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
                             Salvar Segurança
+                        </Button>
+                    </div>
+                </div>
+            </Section>
+
+            {/* ── Grupo: Inteligência Artificial ─────────────────────── */}
+            <Section
+                icon={Sparkles}
+                title="Inteligência Artificial"
+                description="Provedor usado para extrair questões a partir de imagens/PDFs"
+            >
+                <div className="space-y-4">
+                    {!isMaster && (
+                        <div className="border border-amber-500/30 bg-amber-500/5 rounded-lg p-3 flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+                            <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <p>
+                                Apenas o <strong>admin master</strong> pode alterar as configurações de IA.
+                            </p>
+                        </div>
+                    )}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                            <Label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                                <Sparkles className="h-3 w-3" /> Provedor
+                            </Label>
+                            <Select
+                                value={form.ai_provider}
+                                onValueChange={(v) => set("ai_provider", v)}
+                                disabled={!isMaster}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="anthropic">Anthropic (Claude)</SelectItem>
+                                    <SelectItem value="openai">OpenAI (GPT)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                                <Tag className="h-3 w-3" /> Modelo
+                            </Label>
+                            <Input
+                                value={form.ai_model}
+                                onChange={(e) => set("ai_model", e.target.value)}
+                                placeholder={form.ai_provider === "anthropic" ? "claude-opus-4-7" : "gpt-4o"}
+                                disabled={!isMaster}
+                            />
+                        </div>
+                        <div className="space-y-1.5 sm:col-span-2">
+                            <Label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                                <Key className="h-3 w-3" /> Chave de API
+                            </Label>
+                            <Input
+                                type="password"
+                                value={form.ai_api_key}
+                                onChange={(e) => set("ai_api_key", e.target.value)}
+                                placeholder={form.ai_provider === "anthropic" ? "sk-ant-..." : "sk-..."}
+                                autoComplete="off"
+                                disabled={!isMaster}
+                            />
+                            <p className="text-xs text-muted-foreground/70">
+                                A chave é armazenada no banco e nunca enviada de volta ao frontend.
+                            </p>
+                        </div>
+                    </div>
+
+                    {aiTestResult && (
+                        <div className={`border rounded-lg p-3 flex items-start gap-2 text-sm ${aiTestResult.ok ? "border-green-500/30 bg-green-500/5 text-green-700 dark:text-green-400" : "border-red-500/30 bg-red-500/5 text-red-700 dark:text-red-400"}`}>
+                            {aiTestResult.ok ? <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" /> : <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />}
+                            <div>
+                                <p className="font-medium">{aiTestResult.ok ? "Conexão OK" : "Falha na conexão"}</p>
+                                {aiTestResult.error && <p className="text-xs mt-0.5 opacity-80 break-all">{aiTestResult.error}</p>}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={testAIConnection}
+                            disabled={isTestingAI || isSaving || !isMaster}
+                            className="gap-2"
+                        >
+                            {isTestingAI ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                            Testar Conexão
+                        </Button>
+                        <Button
+                            size="sm"
+                            onClick={() => saveSection(["ai_provider", "ai_model", "ai_api_key"])}
+                            disabled={isSaving || !isMaster}
+                            className="gap-2"
+                        >
+                            {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                            Salvar IA
                         </Button>
                     </div>
                 </div>

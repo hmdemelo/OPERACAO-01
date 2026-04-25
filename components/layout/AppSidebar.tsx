@@ -24,7 +24,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
     return (
         <aside
             className={cn(
-                "sticky top-0 z-40 h-screen border-r bg-background flex-col flex-shrink-0 hidden md:flex transition-all duration-300",
+                "h-screen border-r bg-background flex-col flex-shrink-0 hidden md:flex transition-all duration-300 shrink-0",
                 isCollapsed ? "w-20" : "w-64"
             )}
         >
