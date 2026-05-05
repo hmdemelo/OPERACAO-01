@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { CheckCircle2, XCircle, Loader2, Clock, Lock, User, Sparkles } from "lucide-react"
+import { useRef, useState } from "react"
+import { Bold, Italic, Strikethrough, Underline, CheckCircle2, XCircle, Loader2, Clock, Lock, User, Sparkles } from "lucide-react"
+import ReactMarkdown from "react-markdown"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -38,6 +39,124 @@ export type ReviewQuestion = {
     createdAt: string
 }
 
+type ToolbarAction = {
+    icon: React.ReactNode
+    label: string
+    prefix: string
+    suffix: string
+}
+
+const TOOLBAR_ACTIONS: ToolbarAction[] = [
+    { icon: <Bold className="h-3.5 w-3.5" />, label: "Negrito", prefix: "**", suffix: "**" },
+    { icon: <Italic className="h-3.5 w-3.5" />, label: "Itálico", prefix: "*", suffix: "*" },
+    { icon: <Underline className="h-3.5 w-3.5" />, label: "Sublinhado", prefix: "<u>", suffix: "</u>" },
+    { icon: <Strikethrough className="h-3.5 w-3.5" />, label: "Rasurado", prefix: "~~", suffix: "~~" },
+]
+
+function applyMarkdown(
+    textarea: HTMLTextAreaElement,
+    prefix: string,
+    suffix: string,
+    value: string,
+    onChange: (v: string) => void,
+) {
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selected = value.slice(start, end)
+    const before = value.slice(0, start)
+    const after = value.slice(end)
+
+    const newValue = `${before}${prefix}${selected}${suffix}${after}`
+    onChange(newValue)
+
+    requestAnimationFrame(() => {
+        textarea.focus()
+        const cursor = selected ? end + prefix.length + suffix.length : start + prefix.length
+        textarea.setSelectionRange(cursor, cursor)
+    })
+}
+
+function MarkdownToolbar({
+    textareaRef,
+    value,
+    onChange,
+}: {
+    textareaRef: React.RefObject<HTMLTextAreaElement>
+    value: string
+    onChange: (v: string) => void
+}) {
+    return (
+        <div className="flex flex-col gap-1 pt-1">
+            {TOOLBAR_ACTIONS.map((action) => (
+                <button
+                    key={action.label}
+                    type="button"
+                    title={action.label}
+                    onMouseDown={(e) => {
+                        // prevent textarea from losing focus
+                        e.preventDefault()
+                        if (textareaRef.current) {
+                            applyMarkdown(textareaRef.current, action.prefix, action.suffix, value, onChange)
+                        }
+                    }}
+                    className="h-7 w-7 flex items-center justify-center rounded border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    {action.icon}
+                </button>
+            ))}
+        </div>
+    )
+}
+
+function EditableField({
+    label,
+    value,
+    onChange,
+    placeholder,
+    rows = 3,
+    highlight = false,
+    highlightLabel,
+}: {
+    label: string
+    value: string
+    onChange: (v: string) => void
+    placeholder?: string
+    rows?: number
+    highlight?: boolean
+    highlightLabel?: React.ReactNode
+}) {
+    const [focused, setFocused] = useState(false)
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+    return (
+        <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                {label}
+                {highlightLabel}
+            </label>
+            <div className="flex gap-2 items-start">
+                <Textarea
+                    ref={textareaRef}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setFocused(false)}
+                    placeholder={placeholder}
+                    rows={rows}
+                    className={highlight ? "border-amber-500/40 bg-amber-500/5 focus-visible:ring-amber-500/40 flex-1" : "flex-1"}
+                />
+                {focused && (
+                    <MarkdownToolbar
+                        textareaRef={textareaRef as React.RefObject<HTMLTextAreaElement>}
+                        value={value}
+                        onChange={onChange}
+                    />
+                )}
+            </div>
+        </div>
+    )
+}
+
 export function QuestionReviewCard({
     question,
     subjects,
@@ -51,12 +170,12 @@ export function QuestionReviewCard({
     onChanged: () => void
     canApprove?: boolean
 }) {
+    const [stem, setStem] = useState(question.stem)
     const [subjectId, setSubjectId] = useState(question.subjectId || "")
     const [contentId, setContentId] = useState(question.contentId || "")
     const [correctAnswer, setCorrectAnswer] = useState(question.correctAnswer || "")
     const [commentary, setCommentary] = useState(question.commentary || "")
 
-    // Tracks whether the current values came from AI suggestion (and weren't yet edited by the user)
     const [answerFromAI, setAnswerFromAI] = useState(false)
     const [commentaryFromAI, setCommentaryFromAI] = useState(false)
 
@@ -102,6 +221,7 @@ export function QuestionReviewCard({
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    stem: stem.trim() || question.stem,
                     subjectId: subjectId || null,
                     contentId: contentId || null,
                     correctAnswer,
@@ -165,7 +285,19 @@ export function QuestionReviewCard({
             </div>
 
             <div className="p-4 space-y-3">
-                <p className="text-sm whitespace-pre-wrap">{question.stem}</p>
+                {isPending ? (
+                    <EditableField
+                        label="Enunciado"
+                        value={stem}
+                        onChange={setStem}
+                        placeholder="Enunciado da questão..."
+                        rows={4}
+                    />
+                ) : (
+                    <div className="text-sm prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown>{question.stem}</ReactMarkdown>
+                    </div>
+                )}
 
                 <div className="space-y-1.5">
                     {Object.entries(question.alternatives).filter(([, v]) => v).map(([letter, text]) => {
@@ -191,7 +323,9 @@ export function QuestionReviewCard({
                                 className={`${baseClasses} ${stateClasses}`}
                             >
                                 <span className="font-bold flex-shrink-0">{letter})</span>
-                                <span className="whitespace-pre-wrap flex-1">{text}</span>
+                                <span className="prose prose-sm dark:prose-invert max-w-none flex-1 [&>p]:m-0">
+                                    <ReactMarkdown>{text}</ReactMarkdown>
+                                </span>
                                 {isCorrect && (
                                     showAsSuggestion ? (
                                         <Sparkles className="h-4 w-4 text-amber-600 ml-auto flex-shrink-0" />
@@ -205,35 +339,28 @@ export function QuestionReviewCard({
                 </div>
 
                 {isPending ? (
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                            Comentário
-                            {commentaryFromAI && commentary && (
+                    <EditableField
+                        label="Comentário"
+                        value={commentary}
+                        onChange={(v) => { setCommentary(v); setCommentaryFromAI(false) }}
+                        placeholder="Comentário explicativo (opcional)..."
+                        rows={3}
+                        highlight={commentaryFromAI && !!commentary}
+                        highlightLabel={
+                            commentaryFromAI && commentary ? (
                                 <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-500">
                                     <Sparkles className="h-3 w-3" /> sugestão da IA
                                 </span>
-                            )}
-                        </label>
-                        <Textarea
-                            value={commentary}
-                            onChange={(e) => {
-                                setCommentary(e.target.value)
-                                setCommentaryFromAI(false)
-                            }}
-                            placeholder="Comentário explicativo (opcional)..."
-                            rows={3}
-                            className={
-                                commentaryFromAI && commentary
-                                    ? "border-amber-500/40 bg-amber-500/5 focus-visible:ring-amber-500/40"
-                                    : ""
-                            }
-                        />
-                    </div>
+                            ) : null
+                        }
+                    />
                 ) : (
                     question.commentary && (
                         <div className="border-l-4 border-primary/50 bg-primary/5 px-3 py-2 rounded-r">
                             <p className="text-xs font-bold text-primary mb-1">COMENTÁRIO</p>
-                            <p className="text-sm whitespace-pre-wrap">{question.commentary}</p>
+                            <div className="text-sm prose prose-sm dark:prose-invert max-w-none">
+                                <ReactMarkdown>{question.commentary}</ReactMarkdown>
+                            </div>
                         </div>
                     )
                 )}

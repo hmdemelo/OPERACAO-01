@@ -26,11 +26,13 @@ export async function POST(
     try {
         const body = await req.json().catch(() => ({}))
         const {
+            stem,
             subjectId,
             contentId,
             correctAnswer,
             commentary,
         } = body as {
+            stem?: string | null
             subjectId?: string | null
             contentId?: string | null
             correctAnswer?: string | null
@@ -64,6 +66,7 @@ export async function POST(
             where: { id },
             data: {
                 status: "APPROVED",
+                ...(stem?.trim() && { stem: stem.trim() }),
                 correctAnswer,
                 commentary: commentary?.trim() || null,
                 approvedAt: new Date(),

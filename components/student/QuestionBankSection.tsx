@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { BookOpen, Loader2, Eye, EyeOff, CheckCircle2, Lightbulb, Info } from "lucide-react"
+import ReactMarkdown from "react-markdown"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -89,7 +90,9 @@ function QuestionCard({ question }: { question: Question }) {
             </div>
 
             <div className="p-4 space-y-3">
-                <p className="text-sm whitespace-pre-wrap">{question.stem}</p>
+                <div className="text-sm prose prose-sm dark:prose-invert max-w-none">
+                    <ReactMarkdown>{question.stem}</ReactMarkdown>
+                </div>
 
                 <div className="space-y-1.5">
                     {Object.entries(question.alternatives).filter(([, v]) => v).map(([letter, text]) => {
@@ -100,7 +103,9 @@ function QuestionCard({ question }: { question: Question }) {
                                 className={`text-sm flex gap-2 rounded px-2 py-1.5 transition-colors ${isCorrect ? "bg-green-500/10 border border-green-500/30" : "border border-transparent"}`}
                             >
                                 <span className="font-bold flex-shrink-0">{letter})</span>
-                                <span className="whitespace-pre-wrap">{text}</span>
+                                <span className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0">
+                                    <ReactMarkdown>{text}</ReactMarkdown>
+                                </span>
                                 {isCorrect && (
                                     <CheckCircle2 className="h-4 w-4 text-green-600 ml-auto flex-shrink-0" />
                                 )}
@@ -115,7 +120,9 @@ function QuestionCard({ question }: { question: Question }) {
                             <Lightbulb className="h-3.5 w-3.5 text-primary" />
                             <p className="text-xs font-bold text-primary">COMENTÁRIO</p>
                         </div>
-                        <p className="text-sm whitespace-pre-wrap">{question.commentary}</p>
+                        <div className="text-sm prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown>{question.commentary}</ReactMarkdown>
+                        </div>
                     </div>
                 )}
 

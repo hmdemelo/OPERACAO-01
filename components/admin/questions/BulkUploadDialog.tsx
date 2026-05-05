@@ -103,7 +103,8 @@ export function BulkUploadDialog({ open, onOpenChange, onSuccess }: Props) {
                         <ul className="list-disc list-inside text-muted-foreground space-y-0.5">
                             <li><strong>Obrigatórios:</strong> stem, alt_a, alt_b, alt_c</li>
                             <li><strong>Opcionais:</strong> alt_d, alt_e, correct (A-E), subject, content, source, year, commentary</li>
-                            <li>Matérias e conteúdos não cadastrados ficam vinculo nulo — mentor corrige na revisão</li>
+                            <li>Formatação suportada em <code className="px-1 py-0.5 rounded bg-muted">stem</code>, alternativas e comentário: <code className="px-1 py-0.5 rounded bg-muted">**negrito**</code>, <code className="px-1 py-0.5 rounded bg-muted">*itálico*</code>, <code className="px-1 py-0.5 rounded bg-muted">~~rasurado~~</code>, <code className="px-1 py-0.5 rounded bg-muted">&lt;u&gt;sublinhado&lt;/u&gt;</code></li>
+                            <li>Matérias e conteúdos não cadastrados ficam vínculo nulo — mentor corrige na revisão</li>
                             <li>Limite: 500 questões por arquivo</li>
                         </ul>
                         <a

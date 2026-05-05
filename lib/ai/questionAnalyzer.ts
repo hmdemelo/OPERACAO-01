@@ -59,6 +59,7 @@ Retorne APENAS um JSON válido (sem markdown, sem explicação) no formato:
 Regras:
 - O stem deve conter o enunciado completo, preservando contexto, textos de apoio e comandos.
 - As alternativas devem vir exatamente como na prova. Se houver menos de 5, preencha as demais chaves com string vazia.
+- Use markdown para preservar formatação: **negrito**, *itálico*, _sublinhado_ (via itálico), \`código\`, etc.
 - subjectId e contentId DEVEM ser ids exatos da lista acima ou null. NUNCA invente ids.
 - Responda apenas o JSON.`
 }
