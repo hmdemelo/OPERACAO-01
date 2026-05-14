@@ -142,13 +142,13 @@ export function StudentReportView({ userId, initialPeriod = 'week', initialDate 
     useEffect(() => { fetchReport() }, [fetchReport])
 
     const periodLabel = data
-        ? period === 'all'
+        ? data.period.type === 'all'
             ? `${format(new Date(data.period.startDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} – hoje`
             : `${format(new Date(data.period.startDate), "dd 'de' MMMM", { locale: ptBR })} – ${format(new Date(data.period.endDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}`
         : '...'
 
     const chartData = data?.dailyProgress.map(d => ({
-        day: period === 'all'
+        day: data.period.type === 'all'
             ? format(new Date(`${d.date}-01T12:00:00`), 'MMM/yy', { locale: ptBR })
             : format(new Date(`${d.date}T12:00:00`), 'dd/MM'),
         Horas: parseFloat(d.hours.toFixed(1)),
@@ -233,7 +233,7 @@ export function StudentReportView({ userId, initialPeriod = 'week', initialDate 
                             </div>
                             <div className="text-sm text-right text-muted-foreground print:text-left">
                                 <p className="font-semibold text-foreground capitalize">{periodLabel}</p>
-                                <p className="text-xs mt-0.5">Relatório {period === 'week' ? 'Semanal' : period === 'month' ? 'Mensal (últimas 4 semanas)' : 'Completo (todo o período)'}</p>
+                                <p className="text-xs mt-0.5">Relatório {data.period.type === 'week' ? 'Semanal' : data.period.type === 'month' ? 'Mensal (últimas 4 semanas)' : 'Completo (todo o período)'}</p>
                                 <p className="text-xs mt-0.5">Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
                             </div>
                         </div>
@@ -261,26 +261,26 @@ export function StudentReportView({ userId, initialPeriod = 'week', initialDate 
                                 label: 'Horas Estudadas',
                                 icon: Clock,
                                 value: `${data.current.totalHours.toFixed(1)}h`,
-                                delta: period !== 'all' ? <Delta current={data.current.totalHours} previous={data.previous.totalHours} unit="h" /> : null,
+                                delta: data.period.type !== 'all' ? <Delta current={data.current.totalHours} previous={data.previous.totalHours} unit="h" /> : null,
                             },
                             {
                                 label: 'Questões',
                                 icon: BookOpen,
                                 value: data.current.totalQuestions.toLocaleString('pt-BR'),
-                                delta: period !== 'all' ? <Delta current={data.current.totalQuestions} previous={data.previous.totalQuestions} /> : null,
+                                delta: data.period.type !== 'all' ? <Delta current={data.current.totalQuestions} previous={data.previous.totalQuestions} /> : null,
                             },
                             {
                                 label: '% Acerto',
                                 icon: Target,
                                 value: `${data.current.accuracy.toFixed(1)}%`,
-                                delta: period !== 'all' ? <Delta current={data.current.accuracy} previous={data.previous.accuracy} unit="%" /> : null,
+                                delta: data.period.type !== 'all' ? <Delta current={data.current.accuracy} previous={data.previous.accuracy} unit="%" /> : null,
                                 color: data.current.accuracy >= 75 ? 'text-green-600' : data.current.accuracy >= 50 ? 'text-yellow-600' : 'text-red-500',
                             },
                             {
                                 label: 'Dias Ativos',
                                 icon: Activity,
                                 value: `${data.current.activeDays}d`,
-                                delta: period !== 'all' && data.previous.activeDays !== undefined
+                                delta: data.period.type !== 'all' && data.previous.activeDays !== undefined
                                     ? <Delta current={data.current.activeDays} previous={data.previous.activeDays} unit="d" />
                                     : null,
                             },
@@ -288,7 +288,7 @@ export function StudentReportView({ userId, initialPeriod = 'week', initialDate 
                                 label: 'Score',
                                 icon: TrendingUp,
                                 value: data.current.performanceScore,
-                                delta: period !== 'all' && data.previous.performanceScore !== undefined
+                                delta: data.period.type !== 'all' && data.previous.performanceScore !== undefined
                                     ? <Delta current={data.current.performanceScore} previous={data.previous.performanceScore} />
                                     : null,
                                 color: data.current.performanceScore >= 75 ? 'text-green-600' : data.current.performanceScore >= 50 ? 'text-yellow-600' : 'text-red-500',
