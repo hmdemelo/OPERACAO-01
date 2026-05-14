@@ -63,7 +63,7 @@ type ReportData = {
         activeDays?: number
         performanceScore?: number
     }
-    dailyProgress: { date: string; hours: number; questions: number; accuracy: number }[]
+    dailyProgress: { date: string; hours: number; questions: number; accuracy: number; adherence?: number | null }[]
     subjectBreakdown: { subject: string; totalHours: number; totalQuestions: number; accuracy: number }[]
     planAdherence: {
         weeks: { label: string; hasPlan: boolean; totalBlocks: number; completedBlocks: number; progressPercentage: number }[]
@@ -103,7 +103,7 @@ function ChartTooltip({ active, payload, label }: any) {
             <p className="font-semibold">{label}</p>
             {payload.map((entry: any) => (
                 <p key={entry.name} style={{ color: entry.color }}>
-                    {entry.name}: {entry.name === 'Acerto' ? `${entry.value.toFixed(1)}%` : entry.name === 'Horas' ? `${entry.value.toFixed(1)}h` : entry.value}
+                    {entry.name}: {entry.name === 'Acerto' || entry.name === 'Aderência' ? `${entry.value.toFixed(1)}%` : entry.name === 'Horas' ? `${entry.value.toFixed(1)}h` : entry.value}
                 </p>
             ))}
         </div>
@@ -149,11 +149,12 @@ export function StudentReportView({ userId, initialPeriod = 'week', initialDate 
 
     const chartData = data?.dailyProgress.map(d => ({
         day: data.period.type === 'all'
-            ? format(new Date(`${d.date}-01T12:00:00`), 'MMM/yy', { locale: ptBR })
+            ? format(new Date(`${d.date}T12:00:00`), "dd/MM", { locale: ptBR })
             : format(new Date(`${d.date}T12:00:00`), 'dd/MM'),
         Horas: parseFloat(d.hours.toFixed(1)),
         Questões: d.questions,
         Acerto: d.questions > 0 ? parseFloat(d.accuracy.toFixed(1)) : null,
+        Aderência: d.adherence ?? null,
     })) ?? []
 
     return (
@@ -307,11 +308,13 @@ export function StudentReportView({ userId, initialPeriod = 'week', initialDate 
                         ))}
                     </div>
 
-                    {/* Daily progress chart */}
+                    {/* Progress chart */}
                     {chartData.length > 0 && (
                         <Card className="print:shadow-none print:break-inside-avoid">
                             <CardHeader>
-                                <CardTitle className="text-sm font-semibold">Progresso Diário</CardTitle>
+                                <CardTitle className="text-sm font-semibold">
+                                    {data.period.type === 'week' ? 'Progresso Diário' : data.period.type === 'month' ? 'Progresso Diário' : 'Progresso Semanal'}
+                                </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={220}>
@@ -323,7 +326,10 @@ export function StudentReportView({ userId, initialPeriod = 'week', initialDate 
                                         <Tooltip content={<ChartTooltip />} />
                                         <Legend wrapperStyle={{ fontSize: 11 }} />
                                         <Bar yAxisId="left" dataKey="Horas" fill="hsl(var(--primary))" opacity={0.8} radius={[3, 3, 0, 0]} />
-                                        <Line yAxisId="right" type="monotone" dataKey="Acerto" stroke="#f97316" strokeWidth={2} dot={{ r: 3 }} />
+                                        <Line yAxisId="right" type="monotone" dataKey="Acerto" stroke="#f97316" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+                                        {data.period.type === 'all' && (
+                                            <Line yAxisId="right" type="monotone" dataKey="Aderência" stroke="#22c55e" strokeWidth={2} dot={{ r: 3 }} strokeDasharray="4 2" connectNulls={false} />
+                                        )}
                                     </ComposedChart>
                                 </ResponsiveContainer>
                             </CardContent>

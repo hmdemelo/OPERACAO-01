@@ -64,17 +64,28 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
         if (!student) return NextResponse.json({ error: 'Student not found' }, { status: 404 })
 
-        // Group daily logs by month (yyyy-MM)
-        const monthMap = new Map<string, { hours: number; questions: number; correct: number }>()
+        // Build a map of week start (yyyy-MM-dd) → adherence %
+        const adherenceByWeek = new Map<string, number>()
+        for (const plan of planWeeks) {
+            const key = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Araguaina' }).format(plan.startDate)
+            const total = plan.items.length
+            const done = plan.items.filter(i => i.completed).length
+            adherenceByWeek.set(key, total > 0 ? Math.round((done / total) * 100) : 0)
+        }
+
+        // Group logs by week start (yyyy-MM-dd in Araguaina tz)
+        const weekMap = new Map<string, { hours: number; questions: number; correct: number }>()
         for (const log of rawLogs) {
-            const key = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Araguaina', year: 'numeric', month: '2-digit' }).format(log.date).slice(0, 7)
-            if (!monthMap.has(key)) monthMap.set(key, { hours: 0, questions: 0, correct: 0 })
-            const entry = monthMap.get(key)!
+            const logDate = new Date(new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Araguaina' }).format(log.date))
+            const ws = getAraguainaStartOfWeek(logDate)
+            const key = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Araguaina' }).format(ws)
+            if (!weekMap.has(key)) weekMap.set(key, { hours: 0, questions: 0, correct: 0 })
+            const entry = weekMap.get(key)!
             entry.hours += log.hoursStudied
             entry.questions += log.questionsAnswered
             entry.correct += log.correctAnswers
         }
-        const dailyProgress = Array.from(monthMap.entries())
+        const dailyProgress = Array.from(weekMap.entries())
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([date, s]) => ({
                 date,
@@ -82,6 +93,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 questions: s.questions,
                 correct: s.correct,
                 accuracy: s.questions > 0 ? (s.correct / s.questions) * 100 : 0,
+                adherence: adherenceByWeek.has(date) ? adherenceByWeek.get(date)! : null,
             }))
 
         const toAraguainaDateKey = (d: Date) =>
