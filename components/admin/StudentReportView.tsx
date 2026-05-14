@@ -112,12 +112,12 @@ function ChartTooltip({ active, payload, label }: any) {
 
 type Props = {
     userId: string
-    initialPeriod?: 'week' | 'month'
+    initialPeriod?: 'week' | 'month' | 'all'
     initialDate?: string
 }
 
 export function StudentReportView({ userId, initialPeriod = 'week', initialDate }: Props) {
-    const [period, setPeriod] = useState<'week' | 'month'>(initialPeriod)
+    const [period, setPeriod] = useState<'week' | 'month' | 'all'>(initialPeriod)
     const [anchorDate, setAnchorDate] = useState<Date>(() =>
         getAraguainaStartOfWeek(initialDate ?? new Date())
     )
@@ -129,8 +129,10 @@ export function StudentReportView({ userId, initialPeriod = 'week', initialDate 
     const fetchReport = useCallback(async () => {
         setLoading(true)
         try {
-            const dateStr = format(anchorDate, 'yyyy-MM-dd')
-            const res = await fetch(`/api/admin/users/${userId}/report?period=${period}&date=${dateStr}`)
+            const url = period === 'all'
+                ? `/api/admin/users/${userId}/report?period=all`
+                : `/api/admin/users/${userId}/report?period=${period}&date=${format(anchorDate, 'yyyy-MM-dd')}`
+            const res = await fetch(url)
             if (res.ok) setData(await res.json())
         } finally {
             setLoading(false)
@@ -140,11 +142,15 @@ export function StudentReportView({ userId, initialPeriod = 'week', initialDate 
     useEffect(() => { fetchReport() }, [fetchReport])
 
     const periodLabel = data
-        ? `${format(new Date(data.period.startDate), "dd 'de' MMMM", { locale: ptBR })} – ${format(new Date(data.period.endDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}`
+        ? period === 'all'
+            ? `${format(new Date(data.period.startDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} – hoje`
+            : `${format(new Date(data.period.startDate), "dd 'de' MMMM", { locale: ptBR })} – ${format(new Date(data.period.endDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}`
         : '...'
 
     const chartData = data?.dailyProgress.map(d => ({
-        day: format(new Date(`${d.date}T12:00:00`), 'dd/MM'),
+        day: period === 'all'
+            ? format(new Date(`${d.date}-01T12:00:00`), 'MMM/yy', { locale: ptBR })
+            : format(new Date(`${d.date}T12:00:00`), 'dd/MM'),
         Horas: parseFloat(d.hours.toFixed(1)),
         Questões: d.questions,
         Acerto: d.questions > 0 ? parseFloat(d.accuracy.toFixed(1)) : null,
@@ -174,18 +180,26 @@ export function StudentReportView({ userId, initialPeriod = 'week', initialDate 
                         >
                             Mensal
                         </button>
+                        <button
+                            onClick={() => setPeriod('all')}
+                            className={`px-4 py-1.5 text-sm font-medium transition-colors ${period === 'all' ? 'bg-primary text-primary-foreground' : 'bg-background hover:bg-muted'}`}
+                        >
+                            Todo período
+                        </button>
                     </div>
 
-                    {/* Date navigation */}
-                    <div className="flex items-center gap-1 rounded-lg border bg-background px-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setAnchorDate(d => subDays(d, stepDays))}>
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <span className="text-xs font-medium px-1 min-w-[140px] text-center capitalize">{periodLabel}</span>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setAnchorDate(d => addDays(d, stepDays))}>
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                    </div>
+                    {/* Date navigation — hidden for 'all' */}
+                    {period !== 'all' && (
+                        <div className="flex items-center gap-1 rounded-lg border bg-background px-2">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setAnchorDate(d => subDays(d, stepDays))}>
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <span className="text-xs font-medium px-1 min-w-[140px] text-center capitalize">{periodLabel}</span>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setAnchorDate(d => addDays(d, stepDays))}>
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
 
                     <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
                         <Printer className="h-4 w-4" />
@@ -219,7 +233,7 @@ export function StudentReportView({ userId, initialPeriod = 'week', initialDate 
                             </div>
                             <div className="text-sm text-right text-muted-foreground print:text-left">
                                 <p className="font-semibold text-foreground capitalize">{periodLabel}</p>
-                                <p className="text-xs mt-0.5">Relatório {period === 'week' ? 'Semanal' : 'Mensal (últimas 4 semanas)'}</p>
+                                <p className="text-xs mt-0.5">Relatório {period === 'week' ? 'Semanal' : period === 'month' ? 'Mensal (últimas 4 semanas)' : 'Completo (todo o período)'}</p>
                                 <p className="text-xs mt-0.5">Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
                             </div>
                         </div>
@@ -247,26 +261,26 @@ export function StudentReportView({ userId, initialPeriod = 'week', initialDate 
                                 label: 'Horas Estudadas',
                                 icon: Clock,
                                 value: `${data.current.totalHours.toFixed(1)}h`,
-                                delta: <Delta current={data.current.totalHours} previous={data.previous.totalHours} unit="h" />,
+                                delta: period !== 'all' ? <Delta current={data.current.totalHours} previous={data.previous.totalHours} unit="h" /> : null,
                             },
                             {
                                 label: 'Questões',
                                 icon: BookOpen,
                                 value: data.current.totalQuestions.toLocaleString('pt-BR'),
-                                delta: <Delta current={data.current.totalQuestions} previous={data.previous.totalQuestions} />,
+                                delta: period !== 'all' ? <Delta current={data.current.totalQuestions} previous={data.previous.totalQuestions} /> : null,
                             },
                             {
                                 label: '% Acerto',
                                 icon: Target,
                                 value: `${data.current.accuracy.toFixed(1)}%`,
-                                delta: <Delta current={data.current.accuracy} previous={data.previous.accuracy} unit="%" />,
+                                delta: period !== 'all' ? <Delta current={data.current.accuracy} previous={data.previous.accuracy} unit="%" /> : null,
                                 color: data.current.accuracy >= 75 ? 'text-green-600' : data.current.accuracy >= 50 ? 'text-yellow-600' : 'text-red-500',
                             },
                             {
                                 label: 'Dias Ativos',
                                 icon: Activity,
                                 value: `${data.current.activeDays}d`,
-                                delta: data.previous.activeDays !== undefined
+                                delta: period !== 'all' && data.previous.activeDays !== undefined
                                     ? <Delta current={data.current.activeDays} previous={data.previous.activeDays} unit="d" />
                                     : null,
                             },
@@ -274,7 +288,7 @@ export function StudentReportView({ userId, initialPeriod = 'week', initialDate 
                                 label: 'Score',
                                 icon: TrendingUp,
                                 value: data.current.performanceScore,
-                                delta: data.previous.performanceScore !== undefined
+                                delta: period !== 'all' && data.previous.performanceScore !== undefined
                                     ? <Delta current={data.current.performanceScore} previous={data.previous.performanceScore} />
                                     : null,
                                 color: data.current.performanceScore >= 75 ? 'text-green-600' : data.current.performanceScore >= 50 ? 'text-yellow-600' : 'text-red-500',
