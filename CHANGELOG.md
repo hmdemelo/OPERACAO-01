@@ -15,6 +15,26 @@ Acompanhe as novidades e melhorias da plataforma.
 
 ---
 
+## 🔐 v1.5.0 — 24/05/2026 — Conformidade LGPD
+
+### 🛡️ Privacidade e Proteção de Dados
+
+- **Política de Privacidade** — Nova página `/privacidade` (v1.1) com inventário completo de dados, bases legais, direitos do titular e canal DPO (`privacidade@operacao01.com.br`).
+- **Termos de Uso** — Nova página `/termos` com condições de uso, propriedade intelectual e foro de Araguaína/TO.
+- **Banner de consentimento de cookies** — Rastreadores (Facebook Pixel, Google Tag Manager) agora carregam **somente após aceite explícito**. Decisão persiste entre sessões com timestamp e versão da política.
+- **Exportação de dados (portabilidade)** — Alunos podem baixar um JSON com 100% dos seus dados pessoais diretamente do perfil (art. 18, V da LGPD).
+- **Exclusão de conta pelo titular** — Alunos podem excluir a própria conta com confirmação por senha. A exclusão é definitiva (hard delete) e remove em cascata logs, grade, plano semanal, simulados e respostas (art. 18, VI da LGPD).
+- **Remoção do campo CPF** — Campo removido do banco de dados, formulários e APIs. A plataforma não coleta mais CPF (princípio da minimização — art. 6º, III da LGPD).
+- **Retenção de auditoria** — Histórico de edições de logs (`StudyLogHistory`) retido por no máximo 24 meses. Job de limpeza automático executa todo dia 1º do mês.
+
+### 🔧 Melhorias técnicas
+
+- **Cascades corrigidos** — Exclusão de usuário não quebra mais integridade referencial: questões e histórico de auditoria permanecem com vínculo nulo (`uploadedBy = NULL`) em vez de bloquear a exclusão.
+- **Hard delete** — Endpoint de exclusão de usuários pelo admin convertido de soft delete para exclusão real.
+- **Rodapé atualizado** — Links para `/privacidade`, `/termos` e canal de privacidade adicionados ao rodapé da landing page.
+
+---
+
 ## 🚀 v1.4.0 — 01/03/2025
 
 ### ✨ Novidades

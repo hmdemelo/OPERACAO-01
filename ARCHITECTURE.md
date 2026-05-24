@@ -62,7 +62,19 @@ Fluxo completo de gestão e exibição de questões de prova:
 - A preferência **"Exibir questões respondidas"** no perfil do aluno (aba Acadêmico → `PreferencesCard`) persiste em `User.showAnsweredQuestions` via `/api/user/preferences`.
 - Heurística `shouldShowSource`: o campo `source` é exibido apenas se não parecer um nome de arquivo (sem extensões de imagem/PDF nem separadores de caminho).
 
-### G. Integração com IA
+### G. Conformidade LGPD (Lei 13.709/2018)
+
+Implementação completa em 3 sprints (2026-05-24). Referência: [`LGPD.md`](LGPD.md).
+
+- **Consentimento de cookies** — `lib/cookieConsent.ts` usa `useSyncExternalStore`; `CookieBanner.tsx` bloqueia `MarketingScripts` até aceite explícito. Decisão persiste em `localStorage` com timestamp e versão da política.
+- **Política de Privacidade v1.1** — `app/privacidade/page.tsx` (estática, indexável). Versão controlada via `POLICY_VERSION` em `cookieConsent.ts`.
+- **Autodeleção pelo titular** — `DELETE /api/user/account`: verifica senha via bcrypt, bloqueia ADMIN/MENTOR, hard delete em cascade. UI: `DangerZoneCard` no perfil do aluno.
+- **Portabilidade de dados** — `GET /api/user/export`: JSON com todos os dados do titular (sem `passwordHash`); header `Content-Disposition: attachment`. UI: `PrivacyCard` no perfil do aluno.
+- **Retenção de auditoria** — `StudyLogHistory` retido por 24 meses; cron mensal (`0 3 1 * *` em `vercel.json`) chama `POST /api/admin/maintenance/cleanup-history`, protegido por `CRON_SECRET`.
+- **Cascades corretos** — `Question.uploadedBy` e `approvedBy` + `StudyLogHistory.changedBy` com `onDelete: SetNull` (questões e histórico sobrevivem à exclusão do usuário).
+- **CPF removido** — campo excluído do schema, APIs e formulários (migration `20260524400000_lgpd_remove_cpf`).
+
+### H. Integração com IA
 Configurável via painel admin master (`/admin/master`) através das chaves `ai_provider`, `ai_model` e `ai_api_key` em `SystemSettings`. Providers suportados:
 - **Anthropic** (`@anthropic-ai/sdk`) — modelos Claude (ex: `claude-opus-4-7`)
 - **OpenAI** (`openai`) — modelos GPT (ex: `gpt-4o`)
@@ -96,3 +108,5 @@ Os itens a seguir são partes planejadas documentadas previamente que visam maxi
    Conforme o volume de questões cresce, a rota `/api/student/questions` retorna o conjunto completo das matérias da semana sem paginação. Adicionar filtros por matéria, ano e paginação cursor-based melhorará a performance e a UX.
 5. **Histórico de Revisões de Questões**:
    Atualmente a aprovação/rejeição não registra quem agiu nem quando. Adicionar campos `approvedById`, `approvedAt`, `rejectedById`, `rejectedAt` à entidade `Question` viabiliza auditoria e rastreabilidade.
+
+> **Nota:** Conformidade LGPD não está no roadmap pois foi **concluída integralmente em 2026-05-24** (ver seção G acima).

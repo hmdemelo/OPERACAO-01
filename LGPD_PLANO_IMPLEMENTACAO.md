@@ -9,11 +9,13 @@
 
 Implementação em **3 sprints sequenciais**, do mais crítico (exposição legal imediata) ao mais estrutural (boas práticas de retenção). Cada sprint é independente e deployável.
 
-| Sprint | Foco | Prazo | Risco coberto |
+| Sprint | Foco | Status | Commit |
 |---|---|---|---|
-| **1** | Documentação legal + Consentimento de cookies | 7 dias | Crítico |
-| **2** | Direitos do titular (exclusão real + cascades) | 30 dias | Alto |
-| **3** | Portabilidade + Retenção + Tratamento do CPF | 60 dias | Médio |
+| **1** | Documentação legal + Consentimento de cookies | ✅ Concluído | 95d9129 |
+| **2** | Direitos do titular (exclusão real + cascades) | ✅ Concluído | 2140f6c |
+| **3** | Portabilidade + Retenção + Remoção do CPF | ✅ Concluído | ec0ceef |
+
+> **Implementação completa em produção — 2026-05-24.**
 
 ---
 

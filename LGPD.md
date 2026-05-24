@@ -179,49 +179,55 @@
 
 ## 3. Resumo Executivo de Conformidade
 
-| Área | Status | Risco | Prazo Sugerido |
-|---|---|---|---|
-| Política de Privacidade e Termos | ❌ Ausente | Crítico | 7 dias |
-| Consentimento para rastreamento | ❌ Violação | Crítico | 7 dias |
-| CPF em texto claro | ⚠️ Risco alto | Alto | 30 dias |
-| Exclusão real de conta | ❌ Ausente | Alto | 30 dias |
-| Cascade deletes | ❌ Bug | Alto | 30 dias |
-| Portabilidade de dados | ❌ Ausente | Médio | 60 dias |
-| Política de retenção | ❌ Ausente | Médio | 60 dias |
-| Canal de privacidade (DPO) | ❌ Ausente | Alto | 7 dias |
-| IPs / User Agents | ✅ Conforme | — | — |
-| SDKs de telemetria | ✅ Conforme | — | — |
-| Hash de senha | ✅ Conforme | — | — |
-| Expiração de sessão | ✅ Conforme | — | — |
+> **Última atualização:** 2026-05-24 — todos os sprints implementados e em produção.
+
+| Área | Status | Implementado em |
+|---|---|---|
+| Política de Privacidade e Termos | ✅ Conforme | Sprint 1 (commit 95d9129) |
+| Consentimento para rastreamento | ✅ Conforme | Sprint 1 (commit 95d9129) |
+| CPF em texto claro | ✅ Removido | Sprint 3 (commit ec0ceef) |
+| Exclusão real de conta | ✅ Conforme | Sprint 2 (commit 2140f6c) |
+| Cascade deletes | ✅ Conforme | Sprint 2 (commit 2140f6c) |
+| Portabilidade de dados | ✅ Conforme | Sprint 3 (commit ec0ceef) |
+| Política de retenção | ✅ Documentada + job ativo | Sprint 3 (commit ec0ceef) |
+| Canal de privacidade (DPO) | ✅ Conforme | Sprint 1 (commit 95d9129) |
+| IPs / User Agents | ✅ Conforme | — |
+| SDKs de telemetria | ✅ Conforme | — |
+| Hash de senha | ✅ Conforme | — |
+| Expiração de sessão | ✅ Conforme | — |
 
 ---
 
 ## 4. Roadmap de Implementação
 
-### Sprint 1 — Crítico (até 7 dias)
+> **Status geral: ✅ CONCLUÍDO** — todos os 3 sprints implementados e em produção (2026-05-24).
 
-- [ ] Criar `app/privacidade/page.tsx` com Política de Privacidade
-- [ ] Criar `app/termos/page.tsx` com Termos de Uso
-- [ ] Adicionar canal `privacidade@operacao01.com.br` ao rodapé (`components/landing/Footer.tsx`)
-- [ ] Implementar banner de cookies com opt-in na landing page
-- [ ] Bloquear carregamento de `<MarketingScripts />` antes do consentimento
-- [ ] Adicionar links /privacidade e /termos no rodapé
+### Sprint 1 — ✅ Concluído (commit 95d9129)
 
-### Sprint 2 — Alto (até 30 dias)
+- [x] Criar `app/privacidade/page.tsx` com Política de Privacidade (v1.1)
+- [x] Criar `app/termos/page.tsx` com Termos de Uso
+- [x] Adicionar canal `privacidade@operacao01.com.br` ao rodapé
+- [x] Implementar banner de cookies com opt-in na landing page (`CookieBanner.tsx`)
+- [x] Bloquear carregamento de `<MarketingScripts />` antes do consentimento
+- [x] Adicionar links `/privacidade` e `/termos` no rodapé e sitemap
 
-- [ ] Corrigir `prisma/schema.prisma`: `onDelete: SetNull` em Question e StudyLogHistory
-- [ ] Criar migration para os cascades corrigidos
-- [ ] Converter soft delete em hard delete no endpoint de admin
-- [ ] Criar `DELETE /api/user/account` (autodeleção com confirmação)
-- [ ] Criar UI de autodeleção na área do aluno (Minha Conta)
-- [ ] Avaliar estratégia para o campo `cpf` (criptografia ou remoção)
+### Sprint 2 — ✅ Concluído (commit 2140f6c)
 
-### Sprint 3 — Médio (até 60 dias)
+- [x] Corrigir `prisma/schema.prisma`: `onDelete: SetNull` em Question e StudyLogHistory
+- [x] Migration `20260524300000_lgpd_user_deletion_cascades` aplicada em produção
+- [x] Converter soft delete em hard delete no endpoint de admin
+- [x] Criar `DELETE /api/user/account` (autodeleção com verificação de senha)
+- [x] Criar `DangerZoneCard` na área do aluno com dialog de confirmação
 
-- [ ] Criar `GET /api/user/export` — exportação JSON dos dados do titular
-- [ ] Definir e documentar política de retenção por tabela
-- [ ] Implementar job de limpeza para `StudyLogHistory` > 24 meses
-- [ ] Adicionar aviso de coleta de CPF com base legal no formulário de cadastro/perfil
+### Sprint 3 — ✅ Concluído (commit ec0ceef)
+
+- [x] Criar `GET /api/user/export` — exportação JSON dos dados do titular
+- [x] Criar `PrivacyCard` no perfil do aluno com botão "Baixar meus dados"
+- [x] Documentar política de retenção em `docs/RETENCAO_DADOS.md`
+- [x] Implementar cron mensal `POST /api/admin/maintenance/cleanup-history` (StudyLogHistory > 24 meses)
+- [x] Configurar `vercel.json` com schedule `0 3 1 * *`
+- [x] Remover campo CPF do schema, APIs, formulários e política de privacidade
+- [x] Migration `20260524400000_lgpd_remove_cpf` aplicada em produção
 
 ---
 
