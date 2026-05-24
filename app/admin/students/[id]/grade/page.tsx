@@ -81,6 +81,11 @@ export default async function AdminStudentGradePage({ params }: PageProps) {
         )
         .map((b) => ({ id: b.id, subjectV2: b.subjectV2 }))
 
+    const serializedSimulations = simulations.map((s) => ({
+        ...s,
+        date: s.date.toISOString(),
+    }))
+
     // Blocks for Fase2 viewer: visible, has completed topics with any f2 revision
     const fase2Blocks = grid.blocks
         .filter((b) => b.visible)
@@ -130,7 +135,7 @@ export default async function AdminStudentGradePage({ params }: PageProps) {
                 <TabsContent value="fase3" className="mt-4">
                     <SimulationEditor
                         studentId={id}
-                        initialSimulations={simulations}
+                        initialSimulations={serializedSimulations}
                         availableBlocks={availableBlocks}
                     />
                 </TabsContent>

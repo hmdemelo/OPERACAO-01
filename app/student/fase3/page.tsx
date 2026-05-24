@@ -23,13 +23,18 @@ export default async function Fase3Page() {
         },
     })
 
+    const serializedSimulations = simulations.map((s) => ({
+        ...s,
+        date: s.date.toISOString(),
+    }))
+
     return (
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex flex-col gap-1">
                 <h1 className="text-3xl font-black uppercase tracking-tighter">Fase 3</h1>
                 <p className="text-muted-foreground text-sm">Simulados — preencha suas anotações e resultados.</p>
             </div>
-            <Fase3View initialSimulations={simulations} />
+            <Fase3View initialSimulations={serializedSimulations} />
         </div>
     )
 }
