@@ -1,6 +1,7 @@
 "use client"
 
 import Script from "next/script"
+import { useCookieConsent } from "@/lib/cookieConsent"
 
 interface MarketingScriptsProps {
     fbPixelId?: string
@@ -8,6 +9,12 @@ interface MarketingScriptsProps {
 }
 
 export function MarketingScripts({ fbPixelId, gtmId }: MarketingScriptsProps) {
+    const { state } = useCookieConsent()
+
+    // Bloqueio prévio obrigatório (LGPD): nenhum script de tracking carrega
+    // antes do clique explícito em "Aceitar" no banner de cookies.
+    if (state !== "accepted") return null
+
     return (
         <>
             {/* Facebook Pixel */}

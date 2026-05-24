@@ -2,14 +2,26 @@ import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const baseUrl = 'https://www.operacao01.com.br'
+    const lastModified = new Date()
 
     return [
         {
             url: baseUrl,
-            lastModified: new Date(),
+            lastModified,
             changeFrequency: 'monthly',
             priority: 1,
         },
-        // Caso futuramente existam páginas públicas como /sobre ou /termos, elas entram aqui
+        {
+            url: `${baseUrl}/privacidade`,
+            lastModified,
+            changeFrequency: 'yearly',
+            priority: 0.3,
+        },
+        {
+            url: `${baseUrl}/termos`,
+            lastModified,
+            changeFrequency: 'yearly',
+            priority: 0.3,
+        },
     ]
 }

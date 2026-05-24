@@ -1,6 +1,7 @@
 import { LandingPage } from "@/components/landing/LandingPage"
 import { getFeaturedStudents, getMethodItems, getPlans, getLandingConfig } from "@/lib/landing"
 import { MarketingScripts } from "@/components/landing/MarketingScripts";
+import { CookieBanner } from "@/components/landing/CookieBanner";
 
 export const revalidate = 60; // Revalida a cada 60 segundos (ISR)
 
@@ -19,6 +20,7 @@ export default async function RootPage() {
         plans={plans}
         config={config}
       />
+      <CookieBanner />
     </>
   );
 }
