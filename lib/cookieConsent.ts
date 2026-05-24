@@ -6,7 +6,7 @@ export type ConsentDecision = "accepted" | "rejected"
 export type ConsentState = "pending" | ConsentDecision
 
 const STORAGE_KEY = "cookieConsent"
-const POLICY_VERSION = "1.0"
+const POLICY_VERSION = "1.1"
 const CONSENT_EVENT = "cookie-consent-change"
 
 interface StoredConsent {

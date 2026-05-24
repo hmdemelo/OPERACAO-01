@@ -20,7 +20,6 @@ export function dbToForm(initialData: any): Partial<ProfileFormValues> {
         name: initialData.name || "",
         email: initialData.email || "",
         phone: initialData.phone || "",
-        cpf: initialData.cpf || "",
         birthDate: formatDateForInput(initialData.birthDate),
         educationLevel: initialData.educationLevel || "",
         dailyHours: typeof initialData.dailyHours === 'number' ? initialData.dailyHours : 0,

@@ -4,7 +4,6 @@ export const profileFormSchema = z.object({
     name: z.string().min(2, { message: "Nome deve ter pelo menos 2 caracteres." }),
     email: z.string().email(),
     phone: z.string().optional().nullable(),
-    cpf: z.string().optional().nullable(),
     birthDate: z.string().optional().nullable(), // YYYY-MM-DD
     targetExam: z.string().optional().nullable(),
     educationLevel: z.string().optional().nullable(),

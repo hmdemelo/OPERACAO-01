@@ -64,7 +64,6 @@ const updateUserSchema = z.object({
     role: z.enum(["ADMIN", "MENTOR", "STUDENT"]).optional(),
     active: z.boolean().optional(),
     phone: z.string().optional().nullable(),
-    cpf: z.string().optional().nullable(),
     birthDate: z.string().optional().nullable().transform(str => str ? new Date(str) : null),
     targetExam: z.string().optional().nullable(),
     educationLevel: z.string().optional().nullable(),
@@ -142,7 +141,6 @@ export async function PATCH(
                 active: body.active,
                 // Profile fields
                 phone: body.phone || null,
-                cpf: body.cpf || null,
                 birthDate: body.birthDate ? new Date(body.birthDate) : null,
                 targetExam: body.targetExam || null,
                 educationLevel: body.educationLevel || null,

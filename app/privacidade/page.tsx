@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 }
 
 const VIGENCIA = "24 de maio de 2026"
-const VERSAO = "1.0"
+const VERSAO = "1.1"
 
 export default function PoliticaPrivacidadePage() {
     return (
@@ -89,11 +89,6 @@ export default function PoliticaPrivacidadePage() {
                                     <td className="px-4 py-3">Execução de contrato (art. 7º, V)</td>
                                 </tr>
                                 <tr>
-                                    <td className="px-4 py-3 font-medium">CPF</td>
-                                    <td className="px-4 py-3">Identificação interna</td>
-                                    <td className="px-4 py-3">Legítimo interesse (art. 7º, IX)</td>
-                                </tr>
-                                <tr>
                                     <td className="px-4 py-3 font-medium">Data de nascimento</td>
                                     <td className="px-4 py-3">Personalização e métricas</td>
                                     <td className="px-4 py-3">Execução de contrato (art. 7º, V)</td>
@@ -123,6 +118,10 @@ export default function PoliticaPrivacidadePage() {
                         3. Dados que NÃO coletamos
                     </h2>
                     <ul className="list-disc space-y-2 pl-6 text-slate-300 leading-relaxed">
+                        <li>
+                            Não coletamos CPF nem outros documentos de identificação civil (princípio da
+                            minimização — art. 6º, III da LGPD).
+                        </li>
                         <li>Não armazenamos seu endereço IP em nosso banco de dados.</li>
                         <li>Não armazenamos seu User Agent (informações do navegador).</li>
                         <li>Não utilizamos login social (Google, Facebook etc.) — apenas credenciais próprias.</li>

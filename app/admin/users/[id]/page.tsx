@@ -23,7 +23,6 @@ export default async function AdminUserEditPage({ params }: { params: Promise<{ 
                 name: true,
                 email: true,
                 phone: true,
-                cpf: true,
                 birthDate: true,
                 targetExam: true,
                 educationLevel: true,

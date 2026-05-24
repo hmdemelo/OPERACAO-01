@@ -15,7 +15,6 @@ model User {
   passwordHash      String
   role              Role              @default(STUDENT)
   phone             String?
-  cpf               String?
   birthDate         DateTime?
   targetExam        String?
   notes             String?

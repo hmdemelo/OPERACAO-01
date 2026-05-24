@@ -17,7 +17,6 @@ export default async function ProfilePageWrapper() {
             name: true,
             email: true,
             phone: true,
-            cpf: true,
             birthDate: true,
             targetExam: true,
             educationLevel: true,

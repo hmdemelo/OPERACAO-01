@@ -12,7 +12,6 @@ const profileSchema = z.object({
     // Actually, let's keep email separate or read-only if it's the ID.
     // User asked for email to be login.
     phone: z.string().optional().nullable(),
-    cpf: z.string().optional().nullable(),
     birthDate: z.string().optional().nullable().transform(str => str ? new Date(str) : null), // Receive as string YYYY-MM-DD
     targetExam: z.string().optional().nullable(),
     educationLevel: z.string().optional().nullable(),
@@ -34,7 +33,6 @@ export async function GET(req: Request) {
                 name: true,
                 email: true,
                 phone: true,
-                cpf: true,
                 birthDate: true,
                 targetExam: true,
                 educationLevel: true,
@@ -72,7 +70,6 @@ export async function PATCH(req: Request) {
             data: {
                 name: data.name,
                 phone: data.phone,
-                cpf: data.cpf,
                 birthDate: data.birthDate,
                 targetExam: data.targetExam,
                 educationLevel: data.educationLevel,

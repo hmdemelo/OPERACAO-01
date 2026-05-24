@@ -22,6 +22,7 @@ import { PersonalDataCard } from "./profile/PersonalDataCard"
 import { AcademicCard } from "./profile/AcademicCard"
 import { LinksCard } from "./profile/LinksCard"
 import { PreferencesCard } from "./PreferencesCard"
+import { PrivacyCard } from "./PrivacyCard"
 import { DangerZoneCard } from "./DangerZoneCard"
 
 interface ProfileFormProps {
@@ -159,6 +160,7 @@ export function ProfileForm({
                                         {isAdmin && <LinksCard />}
                                         <AcademicCard />
                                         {!isAdmin && !isNew && <PreferencesCard />}
+                                        {!isAdmin && !isNew && <PrivacyCard />}
                                         {!isAdmin && !isNew && <DangerZoneCard />}
                                     </div>
                                 </TabsContent>

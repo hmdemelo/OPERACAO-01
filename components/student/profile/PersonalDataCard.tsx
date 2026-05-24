@@ -77,24 +77,11 @@ export function PersonalDataCard() {
                     Dados Pessoais
                 </CardTitle>
                 <CardDescription>
-                    Informações de contato e identificação civil.
+                    Informações de contato.
                 </CardDescription>
             </CardHeader>
             <CardContent className="px-0 space-y-6 pt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                        control={form.control}
-                        name="cpf"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-foreground/70">CPF</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="000.000.000-00" className="bg-card/50" {...field} value={field.value || ""} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
                     <FormField
                         control={form.control}
                         name="phone"
