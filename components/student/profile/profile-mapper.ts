@@ -31,5 +31,6 @@ export function dbToForm(initialData: any): Partial<ProfileFormValues> {
         subjectIds: initialData.userSubjects?.map((item: any) => item.subjectId) || [],
         concursoIds: initialData.userConcursos?.map((item: any) => item.concursoId) || [],
         mentorId: initialData.studentLink?.mentorId || null,
+        appVersion: initialData.appVersion === "v2" ? "v2" : "v1",
     };
 }

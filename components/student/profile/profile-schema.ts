@@ -17,6 +17,7 @@ export const profileFormSchema = z.object({
     subjectIds: z.array(z.string()).optional(),
     concursoIds: z.array(z.string()).optional(),
     mentorId: z.string().optional().nullable(),
+    appVersion: z.enum(["v1", "v2"]).default("v1").optional(),
 })
 
 export type ProfileFormValues = z.infer<typeof profileFormSchema>

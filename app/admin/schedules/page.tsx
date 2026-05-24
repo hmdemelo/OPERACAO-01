@@ -23,7 +23,8 @@ import {
     CheckCircle,
     AlertCircle,
     Edit,
-    BookOpen
+    BookOpen,
+    Layers
 } from "lucide-react"
 import Link from "next/link"
 import { format, startOfWeek, addWeeks, subWeeks, endOfWeek } from "date-fns"
@@ -276,6 +277,11 @@ export default function AdminOverviewPage() {
                                             >
                                                 <BookOpen className="h-4 w-4" />
                                             </Button>
+                                            <Link href={`/admin/students/${item.userId}/grade`}>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" title="Grade de Estudos">
+                                                    <Layers className="h-4 w-4" />
+                                                </Button>
+                                            </Link>
                                             <Link href={`/admin/students/${item.userId}/weekly-plan?date=${format(weekStart, 'yyyy-MM-dd')}`}>
                                                 {item.hasPlan ? (
                                                     <Button variant="outline" size="sm" className="gap-2">

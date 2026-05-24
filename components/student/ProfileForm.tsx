@@ -79,10 +79,13 @@ export function ProfileForm({
 
             toast.success(isNew ? "Usuário criado com sucesso!" : "Perfil atualizado com sucesso!")
 
-            if (onSuccessRedirect) {
-                // Short timeout to allow toast to be visible
+            const redirect = isNew && updatedUser.appVersion === "v2" && updatedUser.role === "STUDENT"
+                ? `/admin/students/${updatedUser.id}/grade`
+                : onSuccessRedirect
+
+            if (redirect) {
                 setTimeout(() => {
-                    router.push(onSuccessRedirect)
+                    router.push(redirect)
                     router.refresh()
                 }, 800)
             } else {

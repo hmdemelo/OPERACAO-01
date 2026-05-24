@@ -10,16 +10,46 @@ import { adminItems, mentorItems, studentItems } from "./menu-items"
 interface AppSidebarProps {
     role: "ADMIN" | "MENTOR" | "STUDENT"
     userEmail?: string | null
+    appVersion?: string
 }
 
-export function AppSidebar({ role }: AppSidebarProps) {
+export function AppSidebar({ role, appVersion = "v1" }: AppSidebarProps) {
     const pathname = usePathname()
     const { isCollapsed } = useSidebar()
 
-    const items =
+    const baseItems =
         role === "ADMIN" ? adminItems :
             role === "MENTOR" ? mentorItems :
                 studentItems
+
+    const items = role === "STUDENT"
+        ? baseItems.filter((item: any) => appVersion === "v2" ? item.v2 !== false : item.v1 !== false)
+        : baseItems
+
+    const mainItems = items.filter((item: any) => !item.section)
+    const sectionedItems = items.filter((item: any) => item.section)
+    const sections = Array.from(new Set(sectionedItems.map((i: any) => i.section as string)))
+
+    function renderItem(item: any) {
+        return (
+            <Link
+                key={item.href}
+                href={item.href}
+                prefetch={item.prefetch}
+                title={isCollapsed ? item.label : undefined}
+                className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-foreground",
+                    (pathname === item.href || pathname.startsWith(item.href + "/"))
+                        ? "bg-secondary text-secondary-foreground shadow-sm"
+                        : "text-muted-foreground",
+                    isCollapsed && "justify-center px-2"
+                )}
+            >
+                <item.icon className={cn("flex-shrink-0", isCollapsed ? "h-6 w-6" : "h-4 w-4")} />
+                {!isCollapsed && <span>{item.label}</span>}
+            </Link>
+        )
+    }
 
     return (
         <aside
@@ -36,23 +66,18 @@ export function AppSidebar({ role }: AppSidebarProps) {
             </div>
 
             <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-                {items.map((item) => (
-                    <Link
-                        key={item.href}
-                        href={item.href}
-                        prefetch={(item as any).prefetch}
-                        title={isCollapsed ? item.label : undefined}
-                        className={cn(
-                            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-foreground",
-                            pathname === item.href
-                                ? "bg-secondary text-secondary-foreground shadow-sm"
-                                : "text-muted-foreground",
-                            isCollapsed && "justify-center px-2"
+                {mainItems.map(renderItem)}
+
+                {sections.map((section) => (
+                    <div key={section} className="pt-3 space-y-1">
+                        <div className="border-t border-border/50 mb-3" />
+                        {!isCollapsed && (
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-3 pb-1">
+                                {section}
+                            </p>
                         )}
-                    >
-                        <item.icon className={cn("flex-shrink-0", isCollapsed ? "h-6 w-6" : "h-4 w-4")} />
-                        {!isCollapsed && <span>{item.label}</span>}
-                    </Link>
+                        {sectionedItems.filter((i: any) => i.section === section).map(renderItem)}
+                    </div>
                 ))}
             </div>
         </aside>

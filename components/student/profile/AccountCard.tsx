@@ -29,7 +29,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { User, Mail, KeyRound, Pencil, Check, X } from "lucide-react"
+import { User, Mail, KeyRound, Pencil, Check, X, Layers, BookOpen } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProfileFormValues } from "./profile-schema"
 import { useState } from "react"
@@ -271,6 +271,52 @@ export function AccountCard({ isAdmin, isNew, mentors = [] }: AccountCardProps) 
                         </>
                     )}
                 </div>
+
+                {isAdmin && isNew && form.watch("role") === "STUDENT" && (
+                    <FormField
+                        control={form.control}
+                        name="appVersion"
+                        render={({ field }) => (
+                            <FormItem className="mt-2">
+                                <FormLabel className="text-foreground/70">Versão da Plataforma</FormLabel>
+                                <div className="grid grid-cols-2 gap-3 mt-1">
+                                    {(["v1", "v2"] as const).map((v) => (
+                                        <button
+                                            key={v}
+                                            type="button"
+                                            onClick={() => field.onChange(v)}
+                                            className={`relative flex flex-col gap-2 rounded-lg border p-4 text-left transition-all ${
+                                                field.value === v
+                                                    ? "border-primary bg-primary/10 shadow-sm"
+                                                    : "border-border bg-card/50 hover:border-primary/40"
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                {v === "v1" ? (
+                                                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                                                ) : (
+                                                    <Layers className="h-4 w-4 text-primary" />
+                                                )}
+                                                <span className="text-sm font-semibold">
+                                                    {v === "v1" ? "Clássica (V1)" : "Nova (V2)"}
+                                                </span>
+                                                {field.value === v && (
+                                                    <Check className="h-3.5 w-3.5 text-primary ml-auto" />
+                                                )}
+                                            </div>
+                                            <p className="text-[11px] text-muted-foreground leading-snug">
+                                                {v === "v1"
+                                                    ? "Plano semanal, log de estudos e banco de questões."
+                                                    : "Grade de blocos, nova experiência. Irreversível após criação."}
+                                            </p>
+                                        </button>
+                                    ))}
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
             </CardContent>
         </Card>
     )

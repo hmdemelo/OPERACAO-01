@@ -9,18 +9,19 @@ Este documento descreve o funcionamento atual da aplicação, detalhando o que r
 ### A. Estrutura de Pastas e Rotas
 A aplicação é construída utilizando o **App Router** do Next.js (versão instalada identificada como 16.1.6 no package.json).
 - **`/app`**: Todas as rotas estão diretamente na raiz, sem a divisão por Route Groups (como `(app)` ou `(marketing)`).
-  - `/app/admin`: Contém páginas de administração (dashboards, gestão de alunos, concuros, matriz curicular).
-  - `/app/student`: Área restrita do estudante (dashboard, log de estudos, planejamento semanal).
+  - `/app/admin`: Contém páginas de administração (dashboards, gestão de alunos, concursos, matriz curricular, gestão de questões).
+  - `/app/student`: Área restrita do estudante (dashboard, log de estudos, planejamento semanal, banco de questões da semana).
   - `/app/signin`: Interface de Login.
   - `/app/layout.tsx`: Embrulha **toda** a aplicação com provedores essenciais: `AuthSessionProvider`, `QueryProvider` (React Query) e `ThemeProvider` (fixado unicamente no dark mode).
 - **`/components`**: Componentes organizados logicamente (`admin`, `student`, `ui` via shadcn/ui, gráficos e tabelas).
-- **`/lib`**: Todo o coração funcional (autenticação, acesso ao DB, bibliotecas de métricas, utils). A lógica de negócio está bem separada dos componentes de React.
+- **`/lib`**: Todo o coração funcional (autenticação, acesso ao DB, bibliotecas de métricas, utils, IA). A lógica de negócio está bem separada dos componentes de React.
 
 ### B. Banco de Dados e Modelos (Prisma/PostgreSQL)
 O schema do Prisma centraliza regras de negócio complexas. As principais entidades são:
-- ***Usuários e Vínculos:*** A tabela `User` concentra acessos e perfis (`Role`: `ADMIN`, `STUDENT`, `MENTOR`). Contas de Mentores e Estudantes são amarradas pela tabela pilar `MentorshipLink`.
+- ***Usuários e Vínculos:*** A tabela `User` concentra acessos e perfis (`Role`: `ADMIN`, `STUDENT`, `MENTOR`). Contas de Mentores e Estudantes são amarradas pela tabela pilar `MentorshipLink`. O campo `showAnsweredQuestions` (booleano, padrão `false`) controla a visibilidade de questões já respondidas na área do aluno.
 - ***Core do Sistema (Logs de Estudo):*** Baseado nas entidades `StudyLog` (registra a data, horas dedicadas, quantidade de questões feitas e acertos) e suas chaves vinculadas `Content` e `Subject` (Matérias). O histórico de mudanças nisso é salvo em `StudyLogHistory`.
 - ***Planejamento:*** Entidades robustas para guiar os estudos diários do usuário: `WeeklyPlan` e `WeeklyPlanItem`. Inclui o recurso de recálculo dinâmico preditivo para atrasos (`/api/student/plan/recalculate`).
+- ***Banco de Questões:*** Entidade `Question` com status (`PENDING`, `APPROVED`, `REJECTED`), campos `stem`, `alternatives` (JSON), `correctAnswer`, `commentary`, `source`, `year`, e vínculos para `Subject` e `Content`. A tabela join `QuestionAnswer` registra quais questões cada aluno já respondeu (`@@unique([userId, questionId])`).
 - ***Landing Page / Marketing:*** Várias entidades embutidas voltadas para venda e marketing: `Plan`, `FeaturedStudent`, `ChangelogEntry` e `MethodItem`.
 
 ### C. Fluxos de Autenticação
@@ -45,6 +46,30 @@ Localizado no `app/admin/dashboard/page.tsx`, ele funciona principalmente valida
 - Para o Aluno, incluímos alertas vitais pareados chamados **`LatePlanAlert`** que monitoram o status do cronograma, exibindo recomendações automáticas de replanejamento (recalculate) da semana.
 - As visibilidades de widgets do Dashboard já são armazenadas em JSON no banco de dados (`SystemSettings`) por meio da chave `mentor_dashboard_widgets`, e consumidas em tempo de renderização da página.
 
+### F. Módulo de Banco de Questões
+Fluxo completo de gestão e exibição de questões de prova:
+
+**Criação / Importação:**
+- Alunos podem enviar questões individualmente via formulário (controlado pelo toggle `student_upload_enabled` em `SystemSettings`).
+- Admins/Mentores podem fazer upload em lote via arquivo **CSV** (delimitador `;`) ou **JSON**. O parser (`lib/questions/bulkParser.ts`) normaliza nomes de colunas em PT/EN, valida campos obrigatórios e tenta associar automaticamente `Subject` e `Content` pelo nome. Todas as questões importadas chegam com status `PENDING`.
+
+**Revisão (Admin/Mentor):**
+- A tela de revisão (`app/admin/questions`) lista questões pendentes. O card de revisão (`QuestionReviewCard`) permite clicar nas alternativas para selecionar a correta, editar o comentário em textarea e acionar o botão **"Auxílio de IA"** (`/api/admin/questions/[id]/suggest`), que chama `lib/ai/questionAnalyzer.ts` e retorna sugestão de resposta e comentário sem persistir. Os campos preenchidos pela IA ficam destacados em âmbar. O mentor pode aprovar (com `correctAnswer` obrigatório) ou rejeitar.
+
+**Exibição para o Aluno:**
+- `QuestionBankSection` (`components/student/QuestionBankSection.tsx`) busca em `/api/student/questions` as questões aprovadas das matérias do plano semanal vigente, agrupadas por disciplina.
+- O aluno pode marcar cada questão como **"Questão respondida"** (checkbox), que registra um `QuestionAnswer` e oculta a questão da lista por padrão.
+- A preferência **"Exibir questões respondidas"** no perfil do aluno (aba Acadêmico → `PreferencesCard`) persiste em `User.showAnsweredQuestions` via `/api/user/preferences`.
+- Heurística `shouldShowSource`: o campo `source` é exibido apenas se não parecer um nome de arquivo (sem extensões de imagem/PDF nem separadores de caminho).
+
+### G. Integração com IA
+Configurável via painel admin master (`/admin/master`) através das chaves `ai_provider`, `ai_model` e `ai_api_key` em `SystemSettings`. Providers suportados:
+- **Anthropic** (`@anthropic-ai/sdk`) — modelos Claude (ex: `claude-opus-4-7`)
+- **OpenAI** (`openai`) — modelos GPT (ex: `gpt-4o`)
+- **Google Gemini** (`@google/genai`) — modelos Gemini (ex: `gemini-2.0-flash`)
+
+O módulo `lib/ai/questionAnalyzer.ts` abstrai o provider configurado e expõe a função `enrichQuestion`, chamada pelo endpoint `/api/admin/questions/[id]/suggest` para sugestão de gabarito e comentário.
+
 ---
 
 ## 2. Decisões de Arquitetura Contemporâneas (Por quê?)
@@ -64,7 +89,10 @@ Os itens a seguir são partes planejadas documentadas previamente que visam maxi
 1. **Separação Abstrata de Contexto (Route Groups `(marketing)` e `(app)`)**:
    Atualmente, visitantes desconectados que entram na "Homepage" baixam provedores React do Admin Panel inteiro.
    - *Meta*: Segregar as pastas das sessões restritas das sessões de vitrine/Landing Page para não forçarem carregamento do `AuthSessionProvider` ou `QueryProvider` para quem sequer logou no site.
-2. **Otimizações no Cache de Métricas por meio de ISR**:
-   O sistema de cache engatilhada em cima das queries monstruosas de ranking tem de passar e amadurecer a sua política para *Incremental Static Regeneration*, gerando dashboards atualizados instantaneamente em tempo previsíveis para o admin poupando tempo em instâncias concorrentes.
+2. ~~**Otimizações no Cache de Métricas por meio de ISR**~~ ✅ **Concluído**: ISR implementado para a landing page (`revalidate = 3600`) e revalidação on-demand para dashboards via `revalidateTag`.
 3. **Isolamento Total do `use client` nas partes Interativas**: 
    Atualmente provedores vitais abraçam o `layout.tsx` inteiro, fazendo o Next lidar de maneira generalista sob as renderizações de cliente. É essencial mover e especializar componentes de botão e tabelas unicamente onde eles precisam aparecer como cliente.
+4. **Paginação / Filtros no Banco de Questões**:
+   Conforme o volume de questões cresce, a rota `/api/student/questions` retorna o conjunto completo das matérias da semana sem paginação. Adicionar filtros por matéria, ano e paginação cursor-based melhorará a performance e a UX.
+5. **Histórico de Revisões de Questões**:
+   Atualmente a aprovação/rejeição não registra quem agiu nem quando. Adicionar campos `approvedById`, `approvedAt`, `rejectedById`, `rejectedAt` à entidade `Question` viabiliza auditoria e rastreabilidade.

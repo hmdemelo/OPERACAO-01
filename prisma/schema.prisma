@@ -27,6 +27,7 @@ model User {
   dailyHours        Int?
   educationLevel    String?
   showAnsweredQuestions Boolean       @default(false)
+  appVersion        String            @default("v1")
   mentorLinks       MentorshipLink[]  @relation("MentorLinks")
   studentLink       MentorshipLink?   @relation("StudentLinks")
   logs              StudyLog[]
@@ -37,6 +38,7 @@ model User {
   uploadedQuestions Question[]        @relation("QuestionUploader")
   approvedQuestions Question[]        @relation("QuestionApprover")
   questionAnswers   QuestionAnswer[]
+  studyGrid         StudyGrid?
 }
 
 model MentorshipLink {
@@ -293,4 +295,138 @@ model QuestionAnswer {
 
   @@unique([userId, questionId])
   @@index([userId])
+}
+
+model StudyGrid {
+  id          String       @id @default(cuid())
+  userId      String       @unique
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blocks      StudyBlock[]
+  simulations Simulation[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model SubjectV2 {
+  id        String       @id @default(cuid())
+  name      String
+  order     Int          @default(0)
+  active    Boolean      @default(true)
+  contents  ContentV2[]
+  blocks    StudyBlock[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model ContentV2 {
+  id          String              @id @default(cuid())
+  subjectV2Id String
+  subjectV2   SubjectV2           @relation(fields: [subjectV2Id], references: [id], onDelete: Cascade)
+  name        String
+  order       Int                 @default(0)
+  topics      TopicV2[]
+  blocks      StudyContentBlock[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([subjectV2Id])
+}
+
+model TopicV2 {
+  id          String            @id @default(cuid())
+  contentV2Id String
+  contentV2   ContentV2         @relation(fields: [contentV2Id], references: [id], onDelete: Cascade)
+  title       String            @db.VarChar(255)
+  defaultText String?           @db.VarChar(255)
+  order       Int               @default(0)
+  blocks      StudyTopicBlock[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([contentV2Id])
+}
+
+model StudyBlock {
+  id               String              @id @default(cuid())
+  gridId           String
+  grid             StudyGrid           @relation(fields: [gridId], references: [id], onDelete: Cascade)
+  subjectV2Id      String
+  subjectV2        SubjectV2           @relation(fields: [subjectV2Id], references: [id])
+  order            Int                 @default(0)
+  visible          Boolean             @default(true)
+  contentBlocks    StudyContentBlock[]
+  simulationBlocks SimulationBlock[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@index([gridId])
+  @@index([subjectV2Id])
+}
+
+model Simulation {
+  id        String            @id @default(cuid())
+  gridId    String
+  grid      StudyGrid         @relation(fields: [gridId], references: [id], onDelete: Cascade)
+  title     String            @db.VarChar(120)
+  date      DateTime          @db.Date
+  blocks    SimulationBlock[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([gridId])
+}
+
+model SimulationBlock {
+  id             String     @id @default(cuid())
+  simulationId   String
+  simulation     Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  studyBlockId   String
+  studyBlock     StudyBlock @relation(fields: [studyBlockId], references: [id], onDelete: Cascade)
+  instructions   String?    @db.Text
+  studentNotes   String?    @db.VarChar(500)
+  studentResult  String?    @db.VarChar(50)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@unique([simulationId, studyBlockId])
+  @@index([simulationId])
+  @@index([studyBlockId])
+}
+
+model StudyContentBlock {
+  id          String            @id @default(cuid())
+  blockId     String
+  block       StudyBlock        @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  contentV2Id String
+  contentV2   ContentV2         @relation(fields: [contentV2Id], references: [id])
+  order       Int               @default(0)
+  visible     Boolean           @default(true)
+  topicBlocks StudyTopicBlock[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([blockId])
+  @@index([contentV2Id])
+}
+
+model StudyTopicBlock {
+  id              String            @id @default(cuid())
+  contentBlockId  String
+  contentBlock    StudyContentBlock @relation(fields: [contentBlockId], references: [id], onDelete: Cascade)
+  topicV2Id       String
+  topicV2         TopicV2           @relation(fields: [topicV2Id], references: [id])
+  customText      String?           @db.VarChar(255)
+  order           Int               @default(0)
+  visible         Boolean           @default(true)
+  completed       Boolean           @default(false)
+  f2Bool1         Boolean           @default(false)
+  f2Bool2         Boolean           @default(false)
+  f2Bool3         Boolean           @default(false)
+  f2Bool4         Boolean           @default(false)
+  f2Bool5         Boolean           @default(false)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([contentBlockId])
+  @@index([topicV2Id])
 }

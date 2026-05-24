@@ -21,12 +21,13 @@ const createUserSchema = z.object({
     addressCity: z.string().optional().nullable(),
     addressState: z.string().optional().nullable(),
     mentorId: z.string().optional().nullable(),
+    appVersion: z.enum(["v1", "v2"]).default("v1").optional(),
 })
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions)
 
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || !["ADMIN", "MENTOR"].includes(session.user.role)) {
         return new NextResponse("Não autorizado", { status: 401 })
     }
 
@@ -87,6 +88,7 @@ export async function GET(req: Request) {
                         },
                     },
                     active: true,
+                    appVersion: true,
                     // @ts-ignore
                     studentLink: {
                         select: {
@@ -152,6 +154,7 @@ export async function POST(req: Request) {
                 dailyHours: body.dailyHours ?? null,
                 addressCity: body.addressCity || null,
                 addressState: body.addressState || null,
+                appVersion: body.role === "STUDENT" ? (body.appVersion ?? "v1") : "v1",
                 ...(body.role === "STUDENT" && body.mentorId ? {
                     studentLink: {
                         create: {
@@ -165,6 +168,7 @@ export async function POST(req: Request) {
                 name: true,
                 email: true,
                 role: true,
+                appVersion: true,
             },
         })
 
