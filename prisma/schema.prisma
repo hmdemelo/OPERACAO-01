@@ -136,9 +136,9 @@ model StudyLogHistory {
   studyLogId     String
   previousValues Json
   newValues      Json
-  changedById    String
+  changedById    String?
   changedAt      DateTime @default(now())
-  changedBy      User     @relation("HistoryAuthor", fields: [changedById], references: [id])
+  changedBy      User?    @relation("HistoryAuthor", fields: [changedById], references: [id], onDelete: SetNull)
   studyLog       StudyLog @relation(fields: [studyLogId], references: [id], onDelete: Cascade)
 
   @@index([studyLogId])
@@ -271,13 +271,13 @@ model Question {
   source        String?
   year          Int?
 
-  uploadedById  String
-  uploadedBy    User           @relation("QuestionUploader", fields: [uploadedById], references: [id])
+  uploadedById  String?
+  uploadedBy    User?          @relation("QuestionUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
 
   createdAt     DateTime       @default(now())
   approvedAt    DateTime?
   approvedById  String?
-  approvedBy    User?          @relation("QuestionApprover", fields: [approvedById], references: [id])
+  approvedBy    User?          @relation("QuestionApprover", fields: [approvedById], references: [id], onDelete: SetNull)
   answers       QuestionAnswer[]
 
   @@index([status])

@@ -20,34 +20,38 @@ export async function DELETE(
     try {
         const { id } = await params
 
-        // Security: admin cannot deactivate themselves
+        // Segurança: admin não pode excluir a si mesmo
         if (id === session.user.id) {
-            return new NextResponse("Você não pode desativar sua própria conta", { status: 403 })
+            return new NextResponse("Você não pode excluir sua própria conta", { status: 403 })
         }
 
-        // Security: fetch target user to check role
+        // Segurança: buscar role do alvo
         const targetUser = await prisma.user.findUnique({
             where: { id },
-            select: { role: true, active: true },
+            select: { id: true, name: true, role: true },
         })
 
         if (!targetUser) {
             return new NextResponse("Usuário não encontrado", { status: 404 })
         }
 
-        // Security: admin cannot deactivate other admins
+        // Segurança: admin não pode excluir outro admin
         if (targetUser.role === "ADMIN") {
-            return new NextResponse("Não é possível desativar outro administrador", { status: 403 })
+            return new NextResponse("Não é possível excluir outro administrador", { status: 403 })
         }
 
-        // Soft delete: mark as inactive instead of removing
-        const updatedUser = await prisma.user.update({
-            where: { id },
-            data: { active: false },
-            select: { id: true, name: true, active: true },
+        // Hard delete (LGPD art. 18, VI): cascade remove logs, plano, grade, simulados,
+        // respostas, vínculos. Questões enviadas/aprovadas têm uploadedById/approvedById
+        // setados para NULL (preserva acervo institucional).
+        await prisma.user.delete({ where: { id } })
+
+        logger.info("[USER_DELETE] hard delete", {
+            deletedUserId: id,
+            deletedBy: session.user.id,
+            timestamp: new Date().toISOString(),
         })
 
-        return NextResponse.json(updatedUser)
+        return NextResponse.json({ id: targetUser.id, deleted: true })
     } catch (error) {
         logger.error("[USER_DELETE]", error)
         return new NextResponse("Erro Interno", { status: 500 })

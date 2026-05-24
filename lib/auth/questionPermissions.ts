@@ -42,6 +42,11 @@ export async function canReviewQuestion(
 
     const uploader = question.uploadedBy
 
+    // Uploader removido (LGPD): questão vira institucional, qualquer ADMIN/MENTOR pode aprovar.
+    if (!uploader) {
+        return { allowed: true }
+    }
+
     if (uploader.role !== "STUDENT") {
         return { allowed: true }
     }
