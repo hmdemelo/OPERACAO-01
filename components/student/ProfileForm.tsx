@@ -82,7 +82,7 @@ export function ProfileForm({
             toast.success(isNew ? "Usuário criado com sucesso!" : "Perfil atualizado com sucesso!")
 
             const redirect = isNew && updatedUser.appVersion === "v2" && updatedUser.role === "STUDENT"
-                ? `/admin/students/${updatedUser.id}/grade`
+                ? `/admin/v2/students`
                 : onSuccessRedirect
 
             if (redirect) {
