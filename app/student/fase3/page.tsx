@@ -24,8 +24,20 @@ export default async function Fase3Page() {
     })
 
     const serializedSimulations = simulations.map((s) => ({
-        ...s,
+        id: s.id,
+        title: s.title,
         date: s.date.toISOString(),
+        blocks: s.blocks.map((sb) => ({
+            id: sb.id,
+            studyBlockId: sb.studyBlockId,
+            instructions: sb.instructions,
+            studentNotes: sb.studentNotes,
+            studentResult: sb.studentResult,
+            studyBlock: {
+                id: sb.studyBlock.id,
+                subjectV2: sb.studyBlock.subjectV2,
+            },
+        })),
     }))
 
     return (

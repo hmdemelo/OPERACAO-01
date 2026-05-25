@@ -73,28 +73,73 @@ export default async function AdminStudentGradePage({ params }: PageProps) {
     const nameParts = student?.name?.split(" ") || []
     const formattedName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[1]}` : nameParts[0] || "Aluno"
 
+    // Serialize blocks: strip createdAt/updatedAt Date fields before passing to Client Components
+    const serializedBlocks = grid.blocks.map((b) => ({
+        id: b.id,
+        subjectV2Id: b.subjectV2Id,
+        order: b.order,
+        visible: b.visible,
+        subjectV2: b.subjectV2,
+        contentBlocks: b.contentBlocks.map((c) => ({
+            id: c.id,
+            contentV2Id: c.contentV2Id,
+            order: c.order,
+            visible: c.visible,
+            contentV2: c.contentV2,
+            topicBlocks: c.topicBlocks.map((t) => ({
+                id: t.id,
+                topicV2Id: t.topicV2Id,
+                customText: t.customText,
+                order: t.order,
+                visible: t.visible,
+                completed: t.completed,
+                f2Bool1: t.f2Bool1,
+                f2Bool2: t.f2Bool2,
+                f2Bool3: t.f2Bool3,
+                f2Bool4: t.f2Bool4,
+                f2Bool5: t.f2Bool5,
+                topicV2: t.topicV2,
+            })),
+        })),
+    }))
+
     // Blocks available for simulations: visible blocks with at least one completed topic (Fase 1 progress)
-    const availableBlocks = grid.blocks
+    const availableBlocks = serializedBlocks
         .filter((b) =>
             b.visible &&
             b.contentBlocks.some((c) => c.topicBlocks.some((t) => t.completed))
         )
         .map((b) => ({ id: b.id, subjectV2: b.subjectV2 }))
 
+    // Serialize simulations: strip all Date fields
     const serializedSimulations = simulations.map((s) => ({
-        ...s,
+        id: s.id,
+        title: s.title,
         date: s.date.toISOString(),
+        blocks: s.blocks.map((sb) => ({
+            id: sb.id,
+            studyBlockId: sb.studyBlockId,
+            instructions: sb.instructions,
+            studentNotes: sb.studentNotes,
+            studentResult: sb.studentResult,
+            studyBlock: {
+                id: sb.studyBlock.id,
+                subjectV2: sb.studyBlock.subjectV2,
+            },
+        })),
     }))
 
-    // Blocks for Fase2 viewer: visible, has completed topics with any f2 revision
-    const fase2Blocks = grid.blocks
+    // Blocks for Fase2 viewer: visible, has completed topics
+    const fase2Blocks = serializedBlocks
         .filter((b) => b.visible)
         .map((b) => ({
-            ...b,
+            id: b.id,
+            subjectV2: b.subjectV2,
             contentBlocks: b.contentBlocks
                 .filter((c) => c.visible)
                 .map((c) => ({
-                    ...c,
+                    id: c.id,
+                    contentV2: c.contentV2,
                     topicBlocks: c.topicBlocks.filter((t) => t.visible && t.completed),
                 }))
                 .filter((c) => c.topicBlocks.length > 0),
@@ -124,7 +169,7 @@ export default async function AdminStudentGradePage({ params }: PageProps) {
                         studentId={id}
                         studentName={formattedName}
                         subjects={subjects}
-                        initialBlocks={grid.blocks}
+                        initialBlocks={serializedBlocks}
                     />
                 </TabsContent>
 
