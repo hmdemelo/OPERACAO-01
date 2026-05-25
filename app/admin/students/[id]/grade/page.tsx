@@ -13,63 +13,80 @@ interface PageProps {
 }
 
 export default async function AdminStudentGradePage({ params }: PageProps) {
+    console.log("[GRADE PAGE] Start")
     const session = await getServerSession(authOptions)
+    console.log("[GRADE PAGE] Session:", { hasSession: !!session, role: session?.user?.role })
 
     if (!session || !["ADMIN", "MENTOR"].includes(session.user.role)) {
         redirect("/signin")
     }
 
     const { id } = await params
+    console.log("[GRADE PAGE] Student ID:", id)
 
     if (!(await canManageStudentGrade(session.user, id))) {
         redirect("/admin/schedules")
     }
 
-    const [student, grid, subjects, simulations] = await Promise.all([
-        prisma.user.findUnique({ where: { id }, select: { name: true } }),
-        prisma.studyGrid.upsert({
-            where: { userId: id },
-            create: { userId: id },
-            update: {},
-            include: {
-                blocks: {
-                    orderBy: { order: "asc" },
-                    include: {
-                        subjectV2: { select: { id: true, name: true } },
-                        contentBlocks: {
-                            orderBy: { order: "asc" },
-                            include: {
-                                contentV2: { select: { id: true, name: true } },
-                                topicBlocks: {
-                                    orderBy: { order: "asc" },
-                                    include: {
-                                        topicV2: { select: { id: true, title: true, defaultText: true } },
+    let student, grid, subjects, simulations
+    try {
+        console.log("[GRADE PAGE] Fetching data...")
+        ;[student, grid, subjects, simulations] = await Promise.all([
+            prisma.user.findUnique({ where: { id }, select: { name: true } }),
+            prisma.studyGrid.upsert({
+                where: { userId: id },
+                create: { userId: id },
+                update: {},
+                include: {
+                    blocks: {
+                        orderBy: { order: "asc" },
+                        include: {
+                            subjectV2: { select: { id: true, name: true } },
+                            contentBlocks: {
+                                orderBy: { order: "asc" },
+                                include: {
+                                    contentV2: { select: { id: true, name: true } },
+                                    topicBlocks: {
+                                        orderBy: { order: "asc" },
+                                        include: {
+                                            topicV2: { select: { id: true, title: true, defaultText: true } },
+                                        },
                                     },
                                 },
                             },
                         },
                     },
                 },
-            },
-        }),
-        prisma.subjectV2.findMany({
-            where: { active: true },
-            orderBy: [{ order: "asc" }, { name: "asc" }],
-            select: { id: true, name: true },
-        }),
-        prisma.simulation.findMany({
-            where: { grid: { userId: id } },
-            orderBy: { date: "desc" },
-            include: {
-                blocks: {
-                    include: {
-                        studyBlock: { include: { subjectV2: { select: { id: true, name: true } } } },
+            }),
+            prisma.subjectV2.findMany({
+                where: { active: true },
+                orderBy: [{ order: "asc" }, { name: "asc" }],
+                select: { id: true, name: true },
+            }),
+            prisma.simulation.findMany({
+                where: { grid: { userId: id } },
+                orderBy: { date: "desc" },
+                include: {
+                    blocks: {
+                        include: {
+                            studyBlock: { include: { subjectV2: { select: { id: true, name: true } } } },
+                        },
                     },
                 },
-            },
-        }),
-    ])
+            }),
+        ])
+        console.log("[GRADE PAGE] Data fetched:", {
+            hasStudent: !!student,
+            blocks: grid.blocks.length,
+            subjects: subjects.length,
+            simulations: simulations.length,
+        })
+    } catch (error) {
+        console.error("[GRADE PAGE ERROR]", error)
+        throw error
+    }
 
+    console.log("[GRADE PAGE] Processing data...")
     const nameParts = student?.name?.split(" ") || []
     const formattedName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[1]}` : nameParts[0] || "Aluno"
 
@@ -145,6 +162,13 @@ export default async function AdminStudentGradePage({ params }: PageProps) {
                 .filter((c) => c.topicBlocks.length > 0),
         }))
         .filter((b) => b.contentBlocks.length > 0)
+
+    console.log("[GRADE PAGE] Rendering with:", {
+        blocks: serializedBlocks.length,
+        fase2Blocks: fase2Blocks.length,
+        availableBlocks: availableBlocks.length,
+        simulations: serializedSimulations.length,
+    })
 
     return (
         <div className="container mx-auto p-6 space-y-4">
