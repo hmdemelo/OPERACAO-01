@@ -87,3 +87,64 @@ div[data-nextjs-toast],
 div[data-nextjs-dialog-overlay] {
   display: none !important;
 }
+
+/* Student report — PDF / print rules.
+ * Reports run in dark theme on screen but must come out clean on paper:
+ * white background, black text, no shadows, A4 margins, no chrome.
+ */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Hide every piece of app chrome: sidebars, top header, FAB, theme toggle.
+   * The report's own toolbar already uses Tailwind's `print:hidden` so we
+   * just need to nuke the layout shell here. */
+  aside,
+  nav,
+  header,
+  [data-mobile-sidebar],
+  .fixed.bottom-4.left-4,
+  .fixed.bottom-6.right-6,
+  .no-print {
+    display: none !important;
+  }
+  /* The admin layout uses h-screen + overflow-hidden which traps the report
+   * inside a scrolling viewport during print. Unlock the wrapper so the page
+   * grows naturally. */
+  html, body, main {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  /* Keep cards intact across page breaks where flagged. */
+  .print\:break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  /* Stack any 2-column report grid so wide tables stop getting clipped. */
+  .print-stack {
+    display: block !important;
+  }
+  .print-stack > * {
+    margin-bottom: 0.5rem;
+  }
+  /* shadcn <Table> wraps in overflow-auto; that scroll container clips
+   * columns on paper. Unlock it for print. */
+  .overflow-auto {
+    overflow: visible !important;
+  }
+  /* Drop bg-card background in print so colored cards don't render as solid
+   * dark blocks under dark mode. */
+  .bg-card {
+    background: transparent !important;
+  }
+}

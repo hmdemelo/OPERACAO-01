@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db"
 import { ProfileForm } from "@/components/student/ProfileForm"
+import { Button } from "@/components/ui/button"
 import { Role } from "@prisma/client"
 import { getMentorIdFilter, isMasterAdmin } from "@/lib/auth/superAdmin"
 
@@ -31,6 +32,7 @@ export default async function AdminUserEditPage({ params }: { params: Promise<{ 
                 addressState: true,
                 role: true,
                 active: true,
+                appVersion: true,
                 userSubjects: { select: { subjectId: true } },
                 userConcursos: { select: { concursoId: true } },
                 // @ts-ignore
@@ -91,37 +93,55 @@ export default async function AdminUserEditPage({ params }: { params: Promise<{ 
     }
 
     return (
-        <main className="min-h-screen bg-background">
-            <div className="flex flex-col h-full">
-                <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-20">
-                    <div className="container mx-auto py-4 px-4 flex items-center justify-between">
-                        <div className="flex flex-col">
-                            <a
-                                href="/admin/users"
-                                className="text-xs font-medium text-muted-foreground hover:text-primary flex items-center gap-1 mb-1 transition-colors"
-                            >
-                                ← Gerenciamento de Usuários
-                            </a>
-                            <h1 className="text-xl font-bold tracking-tight">Editar Usuário</h1>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                Painel Admin
-                            </div>
-                        </div>
+        <div className="flex flex-col -m-6 md:-m-8 h-full">
+            {/* Header */}
+            <div className="border-b bg-card/50 shrink-0">
+                <div className="container mx-auto py-4 px-4 flex items-center justify-between">
+                    <div className="flex flex-col">
+                        <a
+                            href="/admin/users"
+                            className="text-xs font-medium text-muted-foreground hover:text-primary flex items-center gap-1 mb-1 transition-colors"
+                        >
+                            ← Gerenciamento de Usuários
+                        </a>
+                        <h1 className="text-xl font-bold tracking-tight">Editar Usuário</h1>
+                    </div>
+                    <div className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Painel Admin
                     </div>
                 </div>
+            </div>
 
-                <div className="flex-1 w-full max-w-7xl mx-auto">
+            {/* Content scrollável */}
+            <div className="flex-1 overflow-y-auto">
+                <div className="w-full max-w-7xl mx-auto">
                     <ProfileForm
                         initialData={user}
                         actionUrl={`/api/admin/users/${id}`}
                         onSuccessRedirect="/admin/users"
                         isAdmin={true}
                         mentors={mentors}
+                        hideFooter
                     />
                 </div>
             </div>
-        </main>
+
+            {/* Footer fixo fora do scroll */}
+            <div className="border-t bg-background/80 backdrop-blur-md py-3 shrink-0">
+                <div className="container mx-auto px-4 flex justify-end gap-3">
+                    <a href="/admin/users">
+                        <Button type="button" variant="outline">Cancelar</Button>
+                    </a>
+                    <Button
+                        type="submit"
+                        form="profile-form"
+                        size="lg"
+                        className="px-8 shadow-lg shadow-primary/20"
+                    >
+                        Salvar Alterações
+                    </Button>
+                </div>
+            </div>
+        </div>
     )
 }

@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/authOptions"
 import { redirect } from "next/navigation"
+import { prisma } from "@/lib/db"
 import {
     getWeeklySummary,
     getDailyProgress,
@@ -18,6 +19,16 @@ export default async function StudentDashboardPage() {
     }
 
     const userId = session.user.id
+
+    // Alunos V2 não têm dashboard — métricas dependem de StudyLog (V1).
+    // Redireciona para a Fase 1, primeira tela útil no fluxo V2.
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { appVersion: true },
+    })
+    if (user?.appVersion === "v2") {
+        redirect("/student/fase1")
+    }
 
     // Fetch all necessary data largely in parallel for the dashboard
     const [weeklySummary, dailyProgress, subjectDistribution, historyData] = await Promise.all([

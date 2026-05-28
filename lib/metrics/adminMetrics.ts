@@ -38,7 +38,8 @@ function getDateRange(period: PeriodType): { startDate: Date; endDate: Date } {
 export async function getStudentPerformance(
     period: PeriodType = 'week',
     mentorId?: string,
-    dateOverride?: { startDate: Date; endDate: Date }
+    dateOverride?: { startDate: Date; endDate: Date },
+    appVersion?: string
 ): Promise<StudentPerformance[]> {
     const { startDate: defaultStart, endDate: defaultEnd } = getDateRange(period)
     const startDate = dateOverride?.startDate ?? defaultStart
@@ -48,6 +49,9 @@ export async function getStudentPerformance(
     const studentWhere: any = { role: "STUDENT", active: true }
     if (mentorId) {
         studentWhere.studentLink = { mentorId }
+    }
+    if (appVersion) {
+        studentWhere.appVersion = appVersion
     }
 
     const students = await prisma.user.findMany({
@@ -160,9 +164,10 @@ export type DashboardSummary = {
 
 export async function getDashboardSummary(
     period: PeriodType = 'week',
-    mentorId?: string
+    mentorId?: string,
+    appVersion?: string
 ): Promise<DashboardSummary> {
-    const students = await getStudentPerformance(period, mentorId)
+    const students = await getStudentPerformance(period, mentorId, undefined, appVersion)
 
     const totalStudents = students.length
     const activeStudents = students.filter(s => s.totalQuestions > 0 || s.totalHours > 0).length
@@ -202,7 +207,7 @@ export async function getDashboardSummary(
         const prevStudents = await getStudentPerformance(period, mentorId, {
             startDate: prevStart,
             endDate: prevEnd,
-        })
+        }, appVersion)
         const prevActive = prevStudents.filter(s => s.totalQuestions > 0 || s.totalHours > 0)
         const prevTotalQ = prevStudents.reduce((acc, s) => acc + s.totalQuestions, 0)
         const prevTotalC = prevStudents.reduce((acc, s) => acc + s.totalCorrect, 0)

@@ -175,7 +175,7 @@ export default function AdminConcursosPage() {
     }
 
     return (
-        <div className="container mx-auto p-6">
+        <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Gerenciamento de Concursos</h1>
                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

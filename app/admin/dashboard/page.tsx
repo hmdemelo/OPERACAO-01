@@ -118,7 +118,7 @@ export default async function AdminDashboardPage({
     })
 
     return (
-        <div className="mx-auto w-full max-w-[1600px] px-6 py-6 space-y-6">
+        <div className="w-full max-w-[1600px] space-y-6">
             {/* Header with Title + Period Filter */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4">

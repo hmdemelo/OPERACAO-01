@@ -61,15 +61,15 @@ export function AccountCard({ isAdmin, isNew, mentors = [] }: AccountCardProps) 
 
     return (
         <Card className="border-none shadow-none bg-transparent">
-            <div className="flex flex-col md:flex-row gap-6 items-start mb-8 pb-8 border-b">
-                <Avatar className="h-28 w-28 border-4 border-background shadow-xl shrink-0">
+            <div className="flex flex-col md:flex-row gap-4 items-start mb-4 pb-4 border-b">
+                <Avatar className="h-16 w-16 border-2 border-background shadow-md shrink-0">
                     <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${form.watch("name")}`} />
-                    <AvatarFallback className="text-2xl">U</AvatarFallback>
+                    <AvatarFallback className="text-lg">U</AvatarFallback>
                 </Avatar>
-                <div className="space-y-1 pt-2">
-                    <h3 className="text-2xl font-bold tracking-tight">{form.watch("name") || "Novo Usuário"}</h3>
-                    <p className="text-muted-foreground">{form.watch("email") || "cadastro@exemplo.com"}</p>
-                    <div className="flex gap-2 mt-2">
+                <div className="space-y-0.5 pt-0.5">
+                    <h3 className="text-xl font-bold tracking-tight leading-tight">{form.watch("name") || "Novo Usuário"}</h3>
+                    <p className="text-muted-foreground text-sm">{form.watch("email") || "cadastro@exemplo.com"}</p>
+                    <div className="flex flex-wrap gap-2 mt-1.5">
                         <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
                             {{ STUDENT: "ALUNO", ADMIN: "ADMINISTRADOR", MENTOR: "MENTOR" }[form.watch("role") || "STUDENT"]}
                         </span>
@@ -78,20 +78,32 @@ export function AccountCard({ isAdmin, isNew, mentors = [] }: AccountCardProps) 
                         ) : (
                             <span className="bg-red-500/10 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Inativo</span>
                         )}
+                        {form.watch("role") === "STUDENT" && (
+                            <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                                    form.watch("appVersion") === "v2"
+                                        ? "bg-primary/10 text-primary"
+                                        : "bg-muted text-muted-foreground"
+                                }`}
+                                title={form.watch("appVersion") === "v2" ? "Plataforma V2" : "Plataforma V1"}
+                            >
+                                {form.watch("appVersion") === "v2" ? "V2" : "V1"}
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>
 
-            <CardHeader className="px-0 pt-0">
-                <CardTitle className="text-lg flex items-center gap-2">
+            <CardHeader className="px-0 pt-0 pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
                     Configurações de Acesso
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs">
                     Gerencie as credenciais e permissões fundamentais da conta.
                 </CardDescription>
             </CardHeader>
-            <CardContent className="px-0 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CardContent className="px-0 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                         control={form.control}
                         name="name"

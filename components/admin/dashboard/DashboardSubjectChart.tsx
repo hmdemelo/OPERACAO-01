@@ -5,12 +5,17 @@ import {
     Bar,
     XAxis,
     YAxis,
-    CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    Cell,
+    LabelList,
 } from "recharts"
-import { BookOpen } from "lucide-react"
+import {
+    axisDefaults,
+    barDefaults,
+    tooltipDefaults,
+    chartMargin,
+    chartTokens,
+} from "@/lib/dashboard/chartTheme"
 
 type SubjectData = {
     subject: string
@@ -19,27 +24,34 @@ type SubjectData = {
     accuracy: number
 }
 
-const COLORS = [
-    "hsl(221, 83%, 53%)",  // blue
-    "hsl(262, 83%, 58%)",  // violet
-    "hsl(142, 71%, 45%)",  // green
-    "hsl(38, 92%, 50%)",   // amber
-    "hsl(346, 77%, 50%)",  // rose
-    "hsl(199, 89%, 48%)",  // sky
-    "hsl(24, 95%, 53%)",   // orange
-    "hsl(280, 67%, 51%)",  // purple
-]
-
-function CustomTooltip({ active, payload }: any) {
+function TufteTooltip({ active, payload }: any) {
     if (!active || !payload?.length) return null
-    const data = payload[0].payload as SubjectData
+    const d = payload[0].payload as SubjectData & { shortName: string }
     return (
-        <div className="rounded-lg border bg-background p-3 shadow-lg text-sm space-y-1">
-            <p className="font-semibold">{data.subject}</p>
-            <p className="text-muted-foreground">{data.totalHours}h estudadas</p>
-            <p className="text-muted-foreground">{data.totalQuestions} questões</p>
-            <p className="text-muted-foreground">Precisão: {data.accuracy}%</p>
+        <div className="tabular-nums" style={tooltipDefaults.contentStyle}>
+            <p style={tooltipDefaults.labelStyle}>{d.subject}</p>
+            <p style={{ padding: 0 }}>{d.totalHours}h · {d.totalQuestions} questões · precisão {d.accuracy}%</p>
         </div>
+    )
+}
+
+/**
+ * Right-of-bar value label. Renders only for the bar's own row (LabelList
+ * already scopes this), kept tight and tabular for legibility.
+ */
+function HoursLabel(props: any) {
+    const { x, y, width, height, value } = props
+    return (
+        <text
+            x={x + width + 6}
+            y={y + height / 2}
+            dy={4}
+            fontSize={11}
+            fill={chartTokens.axisLabel}
+            style={{ fontFamily: "inherit", fontVariantNumeric: "tabular-nums" }}
+        >
+            {value}h
+        </text>
     )
 }
 
@@ -47,56 +59,74 @@ export function DashboardSubjectChart({ data }: { data: SubjectData[] }) {
     if (data.length === 0) {
         return (
             <div className="rounded-xl border bg-card p-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <BookOpen className="h-5 w-5 text-muted-foreground" />
-                    <h3 className="font-semibold">Horas por Matéria</h3>
-                </div>
-                <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
-                    Sem dados de estudo neste período.
-                </div>
+                <h3 className="font-semibold mb-2">Horas estudadas por matéria</h3>
+                <p className="text-sm text-muted-foreground h-48 flex items-center justify-center">
+                    Sem registros de estudo neste período. Marque logs para preencher esta visão.
+                </p>
             </div>
         )
     }
 
-    // Truncate subject names for display
-    const chartData = data.slice(0, 8).map(d => ({
-        ...d,
-        shortName: d.subject.length > 18 ? d.subject.slice(0, 16) + "…" : d.subject,
-    }))
+    // Rank-sort: highest-studied subject at the top. Position carries the
+    // primary ordering; length carries the magnitude. No hue required.
+    const chartData = [...data]
+        .sort((a, b) => b.totalHours - a.totalHours)
+        .slice(0, 8)
+        .map(d => ({
+            ...d,
+            shortName: d.subject.length > 28 ? d.subject.slice(0, 26) + "…" : d.subject,
+        }))
+
+    const totalHours = chartData.reduce((sum, d) => sum + d.totalHours, 0)
+    const subjects = chartData.length
+    const top = chartData[0]
 
     return (
         <div className="rounded-xl border bg-card p-6">
-            <div className="flex items-center gap-2 mb-6">
-                <BookOpen className="h-5 w-5 text-muted-foreground" />
-                <h3 className="font-semibold">Horas por Matéria</h3>
+            <div className="flex items-baseline justify-between mb-3">
+                <h3 className="font-semibold">Horas estudadas por matéria</h3>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                    {subjects} {subjects === 1 ? "disciplina" : "disciplinas"} · {totalHours}h totais ·
+                    {" "}mais estudada: {top.subject} ({top.totalHours}h)
+                </span>
             </div>
-            <ResponsiveContainer width="100%" height={Math.max(chartData.length * 44, 200)}>
+
+            <ResponsiveContainer width="100%" height={Math.max(chartData.length * 32, 180)}>
                 <BarChart
                     data={chartData}
                     layout="vertical"
-                    margin={{ top: 0, right: 24, left: 0, bottom: 0 }}
+                    margin={{ ...chartMargin, right: 56, left: 0 }}
                 >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
                     <XAxis
                         type="number"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
+                        {...axisDefaults}
                         tickFormatter={(v) => `${v}h`}
                     />
                     <YAxis
                         type="category"
                         dataKey="shortName"
-                        width={130}
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
+                        width={190}
+                        {...axisDefaults}
                     />
-                    <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
-                    <Bar dataKey="totalHours" radius={[0, 6, 6, 0]} maxBarSize={28}>
-                        {chartData.map((_, index) => (
-                            <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                        ))}
+                    <Tooltip
+                        {...tooltipDefaults}
+                        cursor={{ fill: "hsl(var(--muted) / 0.25)" }}
+                        content={<TufteTooltip />}
+                    />
+
+                    {/*
+                      One fill token across every bar. Category is encoded
+                      entirely by Y-Position (axis), magnitude by Length. Hue
+                      would be redundant here — Bertin's rule applied strictly.
+                      maxBarSize keeps bars hairline-thin (Tufte: high density).
+                    */}
+                    <Bar
+                        {...barDefaults}
+                        dataKey="totalHours"
+                        fill={chartTokens.series.accent}
+                        maxBarSize={14}
+                    >
+                        <LabelList dataKey="totalHours" content={HoursLabel} />
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>

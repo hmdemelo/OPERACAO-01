@@ -1,0 +1,288 @@
+================================================================================
+BANCO DE MENSAGENS DE ESTÍMULO E INCENTIVO PARA ALUNOS
+Operação 01 - Plataforma de Preparação para Concursos
+================================================================================
+
+VISÃO GERAL
+-----------
+Sistema de mensagens contextuais que aparecem no painel do aluno com base em
+seu comportamento e desempenho. Cada mensagem é escolhida automaticamente de
+acordo com o cenário em que o aluno se encontra.
+
+As mensagens são exibidas no topo do painel, em um aviso discreto, como
+um estímulo personalizado para manter a motivação e o foco.
+
+O sistema é bifurcado: alunos V1 (StudyLog + WeeklyPlan) usam contexto e
+cenários V1; alunos V2 (Fase 1/2/3 — StudyGrid) usam contexto e cenários V2.
+Ambos compartilham apenas os cenários "novo usuário" e "padrão".
+
+================================================================================
+VERSÃO 1 (V1) — StudyLog + Banco de Questões + Plano Semanal
+================================================================================
+
+CONTEXTO V1
+-----------
+Os seguintes dados são necessários para detectar o cenário V1 ativo:
+- currentStreak       : dias consecutivos com StudyLog até hoje
+- daysSinceLastLog    : dias desde o último StudyLog (0 = estudou hoje)
+- weeklyAccuracy      : % de acertos na semana (baseado em weeklySummary)
+- weeklyQuestions     : total de questões respondidas na semana
+- planCompletionRate  : % de itens do WeeklyPlan vigente marcados como completed
+- allTimeQuestions    : total histórico de questões respondidas (todos os StudyLogs)
+- accountAgeDays      : dias desde a criação da conta
+- weekHasRemainingDays: true se ainda há dias úteis restantes na semana corrente
+
+PRIORIDADE V1 (decrescente):
+volume_milestone > streak > comeback > accuracy > plan > new_user > default
+
+
+1. SEQUÊNCIA ATIVA (Sequência)
+------------------------------
+Detecta: Aluno estudou 3, 5, 7 ou 10+ dias consecutivos (via StudyLog)
+
+SEQUÊNCIA 3 DIAS:
+• Três dias seguidos. O hábito está sendo construído.
+• Consistência por três dias. Continue e isso vira rotina.
+• Três dias sem falhar. É assim que se prepara para concurso.
+
+SEQUÊNCIA 5 DIAS:
+• Cinco dias consecutivos. Consistência é o que separa quem passa de quem desiste.
+• Cinco dias de estudo. A disciplina já está aparecendo nos números.
+• Meio da semana sem parar. Você está construindo algo sólido.
+
+SEQUÊNCIA 7 DIAS:
+• Uma semana inteira. Isso não é sorte — é disciplina.
+• Sete dias seguidos. Pouquíssimas pessoas chegam aqui.
+• Uma semana completa de estudo. O resultado vai aparecer.
+
+SEQUÊNCIA 10+ DIAS:
+• Dez dias sem parar. Você está à frente de quase todos.
+• Dez dias consecutivos. Isso é preparo de verdade.
+• Nesse ritmo, a prova é consequência.
+
+
+2. RETORNO APÓS PAUSA (Retorno)
+--------------------------------
+Detecta: Aluno ficou 2, 3 ou 5 dias sem StudyLog e retornou
+
+RETORNO 2 DIAS:
+• Dois dias de pausa. Tudo bem — o importante é que você voltou.
+• Dois dias fora. O que importa é que você está aqui agora.
+• Voltou. Isso já é mais do que muita gente faz após uma pausa.
+
+RETORNO 3 DIAS:
+• Voltou. Isso já é mais do que muita gente faz.
+• Três dias difíceis. Mas você está aqui de novo.
+• O intervalo acabou. Agora é retomar o ritmo.
+
+RETORNO 5 DIAS:
+• Cinco dias de pausa. Mas você está aqui de novo. Recomeça do zero.
+• Uma semana fora é pesada, mas o retorno é o que define.
+• Voltou depois de cinco dias. Isso exige mais do que continuar — e você fez.
+
+
+3. PRECISÃO ALTA NA SEMANA
+---------------------------
+Detecta: Aluno respondeu 10+ questões com acertos acima de 75%
+
+PRECISÃO ALTA:
+• Mais de 75% de acertos esta semana. O estudo está se convertendo em resultado.
+• Alta precisão. Você não está só estudando — está aprendendo de verdade.
+• Os números mostram o que as horas de estudo representam. Continue.
+
+
+4. PRECISÃO BAIXA COM VOLUME ALTO
+----------------------------------
+Detecta: Aluno respondeu 15+ questões mas com menos de 50% de acertos
+
+PRECISÃO BAIXA:
+• Muitas questões, mas os acertos ainda estão baixos. Hora de revisar antes de avançar.
+• Volume não é suficiente sem entendimento. Que tal desacelerar e revisar os erros?
+• A quantidade está boa — agora o foco precisa ser na qualidade das respostas.
+
+
+5. PLANO SEMANAL EM DIA
+-----------------------
+Detecta: Aluno completou 70%+ dos itens do plano semanal
+
+PLANO FORTE:
+• Mais de 70% do plano concluído. A semana está sendo executada do jeito certo.
+• Você está seguindo o plano. Esse comprometimento vai aparecer na prova.
+• Plano semanal quase completo. Termina forte.
+
+
+6. PLANO SEMANAL ATRASADO
+-------------------------
+Detecta: Aluno completou menos de 30% do plano e ainda há dias úteis na semana
+
+PLANO ATRASADO:
+• A semana ainda não acabou. Há tempo de recuperar o plano.
+• Atraso no plano não é derrota — é um sinal para ajustar o ritmo agora.
+• O plano está em aberto. Uma sessão focada hoje já faz diferença.
+
+
+7. MARCOS DE VOLUME (Marcos)
+----------------------------
+Detecta: Aluno atinge 100, 250, 500 ou 1000 questões respondidas no total histórico
+
+100 QUESTÕES:
+• 100 questões respondidas. A base está sendo construída.
+• Cem questões. O repertório começa aqui.
+• 100 questões. Você já tem referências reais para a prova.
+
+250 QUESTÕES:
+• 250 questões. Você já tem um repertório real para a prova.
+• Duzentas e cinquenta questões respondidas. Isso é preparo.
+• 250 questões no histórico. O esforço está acumulando.
+
+500 QUESTÕES:
+• 500 questões. Metade do caminho de quem estuda um ano inteiro.
+• Quinhentas questões. Poucos chegam aqui.
+• 500 questões respondidas. Isso é volume de quem quer passar.
+
+1000 QUESTÕES:
+• Mil questões. Isso é preparo de verdade.
+• 1000 questões. Você construiu uma base que a maioria não tem.
+• Mil questões respondidas. O trabalho foi feito.
+
+
+================================================================================
+VERSÃO 2 (V2) — Fase 1 (Tópicos) + Fase 2 (Cadernos) + Fase 3 (Simulados)
+================================================================================
+
+CONTEXTO V2
+-----------
+Os seguintes dados são necessários para detectar o cenário V2 ativo:
+- accountAgeDays               : dias desde a criação da conta
+- fase1Pct                     : % de tópicos concluídos (StudyTopicBlock.completed)
+- fase2Done                    : cadernos de erro produzidos (OR de f2Bool1..5 por disciplina)
+- fase2Total                   : total de cadernos possíveis (5 × nº de disciplinas visíveis)
+- fase3Pct                     : precisão média ponderada nos simulados (null = nenhum preenchido)
+- fase3Count                   : quantidade de simulados preenchidos
+- daysSinceLastTopicCompleted  : dias desde o último StudyTopicBlock.completed = true
+                                 (0 = completou tópico hoje; null = nunca completou)
+
+PRIORIDADE V2 (decrescente):
+fase3_accuracy > fase1_milestone > fase2_strong > fase3_started >
+comeback_v2 > fase1_low > new_user > default
+
+
+1. PRECISÃO ALTA EM SIMULADOS
+------------------------------
+Detecta: fase3Pct >= 70 (com pelo menos 1 simulado preenchido)
+
+SIMULADO ALTA PRECISÃO:
+• Mais de 70% nos simulados. O estudo está se convertendo em resultado.
+• Alta precisão nos simulados. O que você aprendeu na Fase 1 está aparecendo.
+• Os números dos simulados mostram o que as horas de estudo valem. Continue.
+
+
+2. PRECISÃO BAIXA EM SIMULADOS (com volume)
+--------------------------------------------
+Detecta: fase3Count >= 2 e fase3Pct < 50
+
+SIMULADO BAIXA PRECISÃO:
+• Vários simulados, mas a precisão ainda está baixa. Hora de voltar aos cadernos de erro.
+• O volume de simulados está bom — agora o foco precisa ser na revisão dos erros.
+• Fase 2 existe para isso: revisar os erros antes de avançar nos simulados.
+
+
+3. MARCOS DE TÓPICOS CONCLUÍDOS (Fase 1)
+-----------------------------------------
+Detecta: fase1Pct atinge 25%, 50%, 75% ou 100%
+
+FASE 1 — 25%:
+• Um quarto do conteúdo concluído. O trabalho está começando a tomar forma.
+• 25% dos tópicos. A base está sendo construída.
+• Primeiro marco de conteúdo. Continue nesse ritmo.
+
+FASE 1 — 50%:
+• Metade do conteúdo concluído. Você está no meio do caminho.
+• 50% dos tópicos. Daqui pra frente é puro avanço.
+• Metade da Fase 1 feita. Isso é consistência real.
+
+FASE 1 — 75%:
+• 75% do conteúdo concluído. A reta final do programa está chegando.
+• Três quartos dos tópicos. Poucos chegam aqui.
+• 75% da Fase 1. O trabalho está sendo feito do jeito certo.
+
+FASE 1 — 100%:
+• Todo o conteúdo da Fase 1 concluído. Isso é uma preparação completa.
+• 100% dos tópicos. Agora é hora de transformar isso em resultado nos simulados.
+• Fase 1 completa. O repertório está construído.
+
+
+4. CADERNOS DE ERRO EM DIA (Fase 2)
+-------------------------------------
+Detecta: fase2Done / fase2Total >= 0.6 (pelo menos 60% dos cadernos produzidos)
+
+FASE 2 FORTE:
+• Mais de 60% dos cadernos de erro produzidos. A revisão está acontecendo.
+• Cadernos em dia. É assim que o erro vira aprendizado.
+• Fase 2 avançada. Você está fechando os buracos antes da prova.
+
+
+5. PRIMEIRO SIMULADO FEITO
+---------------------------
+Detecta: fase3Count == 1
+
+PRIMEIRO SIMULADO:
+• Primeiro simulado registrado. Agora você tem um número real para trabalhar.
+• Simulado feito. É aqui que o estudo começa a ser testado.
+• Primeiro resultado nos simulados. Use isso como referência para o próximo.
+
+
+6. RETORNO APÓS PAUSA (V2)
+---------------------------
+Detecta: daysSinceLastTopicCompleted >= 3 (e aluno já tinha tópicos concluídos antes)
+
+RETORNO V2 — 3 DIAS:
+• Três dias sem concluir tópicos. O conteúdo ainda está te esperando.
+• Pausa de três dias. Retomar agora ainda faz diferença.
+• O ritmo parou. Uma sessão na Fase 1 já reativa o hábito.
+
+RETORNO V2 — 5+ DIAS:
+• Cinco dias fora da Fase 1. Mas você está aqui agora — recomeça de onde parou.
+• Uma semana sem avançar no conteúdo é pesada, mas o retorno é o que define.
+• Voltou. Isso é mais difícil do que continuar — e você fez.
+
+
+7. FASE 1 BAIXA
+----------------
+Detecta: fase1Pct < 20 (e accountAgeDays > 7, ou seja, não é novo usuário)
+
+FASE 1 BAIXA:
+• Poucos tópicos concluídos até agora. A Fase 1 é onde tudo começa — vale focar.
+• O conteúdo está esperando. Cada tópico concluído é um passo na direção certa.
+• Fase 1 ainda no início. Uma sessão de estudo já muda o número.
+
+
+================================================================================
+CENÁRIOS COMPARTILHADOS (V1 e V2)
+================================================================================
+
+8. NOVO USUÁRIO
+----------------
+Detecta: accountAgeDays <= 7
+
+NOVO USUÁRIO:
+• Primeira semana. O começo parece devagar, mas é onde tudo se define.
+• Você começou — isso já é mais do que a maioria faz.
+• Construir um hábito leva 21 dias. Você já está no caminho.
+• O primeiro passo é o mais difícil. Você já deu.
+
+
+9. MENSAGENS GENÉRICAS (Padrão)
+--------------------------------
+Detecta: Quando nenhum cenário específico se aplica
+
+PADRÃO:
+• O estudo de hoje é o resultado de amanhã.
+• Ninguém passa em concurso por acidente. É escolha.
+• Um dia de cada vez. Só isso.
+• Disciplina é fazer o que precisa ser feito mesmo quando não tem vontade.
+• A prova vai testar o que você fez nos dias em que não estava com vontade.
+• Cada sessão de estudo é um passo que a maioria não dá.
+• O candidato que passa não é necessariamente o mais inteligente — é o mais consistente.
+
+

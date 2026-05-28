@@ -489,7 +489,7 @@ export default function AdminLandingPage() {
     }
 
     return (
-        <div className="container mx-auto p-6 space-y-8">
+        <div className="space-y-8">
             <div className="flex flex-col gap-2">
                 <h1 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Editor da Landing Page</h1>
                 <p className="text-muted-foreground">Gerencie cada detalhe do marketing e conteúdo do seu site.</p>

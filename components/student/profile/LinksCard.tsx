@@ -61,10 +61,10 @@ export function LinksCard() {
                 <CardTitle>Vínculos</CardTitle>
                 <CardDescription>Gerencie a quais concursos e matérias este usuário tem acesso.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
                 <div>
                     <h3 className="text-sm font-medium mb-3">Concursos Vinculados</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                         {concursos.map((item) => (
                             <FormField
                                 key={item.id}
@@ -74,7 +74,7 @@ export function LinksCard() {
                                     return (
                                         <FormItem
                                             key={item.id}
-                                            className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3 bg-secondary/20"
+                                            className="flex flex-row items-start space-x-2 space-y-0 rounded-md border p-2 bg-secondary/20"
                                         >
                                             <FormControl>
                                                 <Checkbox
@@ -104,7 +104,7 @@ export function LinksCard() {
 
                 <div>
                     <h3 className="text-sm font-medium mb-3">Matérias Vinculadas</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                         {subjects.map((item) => (
                             <FormField
                                 key={item.id}
@@ -114,7 +114,7 @@ export function LinksCard() {
                                     return (
                                         <FormItem
                                             key={item.id}
-                                            className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3 bg-secondary/20"
+                                            className="flex flex-row items-start space-x-2 space-y-0 rounded-md border p-2 bg-secondary/20"
                                         >
                                             <FormControl>
                                                 <Checkbox

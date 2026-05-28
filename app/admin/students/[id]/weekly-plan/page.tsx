@@ -75,7 +75,7 @@ export default async function AdminStudentPlanPage({ params }: PageProps) {
     const userExams = student?.userConcursos?.map(uc => uc.concurso.name) || []
 
     return (
-        <div className="container mx-auto p-6 space-y-4">
+        <div className="space-y-4">
             <div className="flex items-center gap-4">
                 <a
                     href="/admin/schedules"

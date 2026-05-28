@@ -10,9 +10,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 interface MobileSidebarProps {
     role: "ADMIN" | "MENTOR" | "STUDENT"
     appVersion?: string
+    questionsEnabled?: boolean
 }
 
-export function MobileSidebar({ role, appVersion = "v1" }: MobileSidebarProps) {
+export function MobileSidebar({ role, appVersion = "v1", questionsEnabled = true }: MobileSidebarProps) {
     const pathname = usePathname()
     const { isMobileOpen, setMobileOpen } = useSidebar()
     const baseItems =
@@ -21,7 +22,10 @@ export function MobileSidebar({ role, appVersion = "v1" }: MobileSidebarProps) {
                 studentItems
 
     const items = role === "STUDENT"
-        ? baseItems.filter((item: any) => appVersion === "v2" ? item.v2 !== false : item.v1 !== false)
+        ? baseItems.filter((item: any) => {
+            if (item.href === "/student/questions" && !questionsEnabled) return false
+            return appVersion === "v2" ? item.v2 !== false : item.v1 !== false
+        })
         : baseItems
 
     const mainItems = items.filter((item: any) => !item.section)

@@ -1,5 +1,7 @@
 import { getServerSession } from "next-auth"
+import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth/authOptions"
+import { getSetting } from "@/lib/settings"
 import QuestionBankSection from "@/components/student/QuestionBankSection"
 import { QuestionUploadFAB } from "@/components/QuestionUploadFAB"
 
@@ -8,6 +10,11 @@ export default async function StudentQuestionsPage() {
 
     if (!session?.user) {
         return <div>Acesso negado</div>
+    }
+
+    const questionsEnabled = (await getSetting("student_questions_enabled")) !== "false"
+    if (!questionsEnabled) {
+        redirect("/student/dashboard")
     }
 
     return (

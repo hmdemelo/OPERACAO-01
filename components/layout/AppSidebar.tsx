@@ -11,9 +11,10 @@ interface AppSidebarProps {
     role: "ADMIN" | "MENTOR" | "STUDENT"
     userEmail?: string | null
     appVersion?: string
+    questionsEnabled?: boolean
 }
 
-export function AppSidebar({ role, appVersion = "v1" }: AppSidebarProps) {
+export function AppSidebar({ role, appVersion = "v1", questionsEnabled = true }: AppSidebarProps) {
     const pathname = usePathname()
     const { isCollapsed } = useSidebar()
 
@@ -23,7 +24,10 @@ export function AppSidebar({ role, appVersion = "v1" }: AppSidebarProps) {
                 studentItems
 
     const items = role === "STUDENT"
-        ? baseItems.filter((item: any) => appVersion === "v2" ? item.v2 !== false : item.v1 !== false)
+        ? baseItems.filter((item: any) => {
+            if (item.href === "/student/questions" && !questionsEnabled) return false
+            return appVersion === "v2" ? item.v2 !== false : item.v1 !== false
+        })
         : baseItems
 
     const mainItems = items.filter((item: any) => !item.section)

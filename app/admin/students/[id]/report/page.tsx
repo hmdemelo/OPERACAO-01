@@ -1,7 +1,9 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/authOptions'
 import { redirect } from 'next/navigation'
+import { prisma } from '@/lib/db'
 import { StudentReportView } from '@/components/admin/StudentReportView'
+import { StudentV2ReportView } from '@/components/admin/StudentV2ReportView'
 
 interface PageProps {
     params: Promise<{ id: string }>
@@ -17,10 +19,23 @@ export default async function StudentReportPage({ params, searchParams }: PagePr
     const { id } = await params
     const { period, date } = await searchParams
 
+    const user = await prisma.user.findUnique({
+        where: { id },
+        select: { appVersion: true },
+    })
+
+    if (user?.appVersion === 'v2') {
+        return (
+            <div className="max-w-5xl">
+                <StudentV2ReportView userId={id} />
+            </div>
+        )
+    }
+
     const initialPeriod = period === 'month' ? 'month' : 'week'
 
     return (
-        <div className="container mx-auto p-6 max-w-5xl">
+        <div className="max-w-5xl">
             <StudentReportView
                 userId={id}
                 initialPeriod={initialPeriod}

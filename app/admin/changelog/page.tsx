@@ -39,7 +39,7 @@ export default async function ChangelogPage() {
     const versions = Object.keys(groupedEntries)
 
     return (
-        <div className="container mx-auto p-6 max-w-4xl">
+        <div className="max-w-4xl">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Mural de Atualizações</h1>

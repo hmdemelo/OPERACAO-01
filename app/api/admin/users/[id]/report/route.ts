@@ -6,6 +6,7 @@ import { parseISO, isValid, addDays, endOfDay, subDays, format } from 'date-fns'
 import { getAraguainaStartOfWeek } from '@/lib/date-utils'
 import { getMentorIdFilter } from '@/lib/auth/superAdmin'
 import { getWeeklySummary, getDailyProgress, getSubjectDistribution } from '@/lib/metrics/studentMetrics'
+import { getV2StudentReport } from '@/lib/metrics/v2Metrics'
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions)
@@ -26,6 +27,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const rawPeriod = searchParams.get('period')
     const period: 'week' | 'month' | 'all' = rawPeriod === 'month' ? 'month' : rawPeriod === 'all' ? 'all' : 'week'
     const dateParam = searchParams.get('date')
+
+    // V2 students get a different payload entirely (funil F1/F2/F3 + simulados).
+    // Period filters don't apply — fase metrics are cumulative across the grade.
+    const versionCheck = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { appVersion: true },
+    })
+    if (versionCheck?.appVersion === 'v2') {
+        const report = await getV2StudentReport(userId)
+        if (!report) return NextResponse.json({ error: 'Student not found' }, { status: 404 })
+        return NextResponse.json({ version: 'v2', ...report })
+    }
 
     // For 'all': find first StudyLog date, no previous period
     if (period === 'all') {
@@ -131,6 +144,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         if (current.totalQuestions > 10 && current.accuracy < 60) alerts.push(`Precisão crítica (${current.accuracy.toFixed(1)}%)`)
 
         return NextResponse.json({
+            version: 'v1',
             student: {
                 name: student.name,
                 email: student.email,
@@ -260,6 +274,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         : 0
 
     return NextResponse.json({
+        version: 'v1',
         student: {
             name: student.name,
             email: student.email,
