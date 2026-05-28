@@ -39,6 +39,7 @@ import {
     XCircle,
     Lock,
     Upload,
+    Activity,
 } from "lucide-react"
 
 type Settings = {
@@ -54,6 +55,8 @@ type Settings = {
     ai_model: string
     ai_api_key: string
     student_upload_enabled: string
+    student_questions_enabled: string
+    tracking_enabled: string
 }
 
 type Stats = {
@@ -132,6 +135,8 @@ export default function AdminSettingsPage() {
         ai_model: "claude-opus-4-7",
         ai_api_key: "",
         student_upload_enabled: "true",
+        student_questions_enabled: "true",
+        tracking_enabled: "true",
     })
 
     const [isTestingAI, setIsTestingAI] = useState(false)
@@ -512,7 +517,7 @@ export default function AdminSettingsPage() {
             <Section
                 icon={Upload}
                 title="Banco de Questões"
-                description="Controle o envio de questões pelos alunos"
+                description="Controle a visibilidade e o envio de questões pelos alunos"
             >
                 <div className="space-y-4">
                     {!isMaster && (
@@ -523,6 +528,19 @@ export default function AdminSettingsPage() {
                     )}
                     <div className="flex items-center justify-between border rounded-lg p-4 bg-muted/10">
                         <div>
+                            <p className="font-medium text-sm">Seção de questões visível para alunos</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Quando desativado, o item &quot;Banco de Questões&quot; some do menu do aluno e a rota é bloqueada (redireciona para o dashboard). Não afeta o painel admin.
+                            </p>
+                        </div>
+                        <Switch
+                            checked={form.student_questions_enabled === "true"}
+                            onCheckedChange={(val) => set("student_questions_enabled", val ? "true" : "false")}
+                            disabled={!isMaster}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between border rounded-lg p-4 bg-muted/10">
+                        <div>
                             <p className="font-medium text-sm">Envio de questões pelos alunos</p>
                             <p className="text-xs text-muted-foreground mt-0.5">
                                 Quando desativado, o botão de upload some da interface do aluno. A visualização do banco de questões continua disponível.
@@ -531,13 +549,52 @@ export default function AdminSettingsPage() {
                         <Switch
                             checked={form.student_upload_enabled === "true"}
                             onCheckedChange={(val) => set("student_upload_enabled", val ? "true" : "false")}
+                            disabled={!isMaster || form.student_questions_enabled !== "true"}
+                        />
+                    </div>
+                    <div className="flex justify-end pt-1">
+                        <Button
+                            size="sm"
+                            onClick={() => saveSection(["student_questions_enabled", "student_upload_enabled"])}
+                            disabled={isSaving || !isMaster}
+                            className="gap-2"
+                        >
+                            {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                            Salvar
+                        </Button>
+                    </div>
+                </div>
+            </Section>
+
+            <Section
+                icon={Activity}
+                title="Rastreio de Acesso"
+                description="Histórico de logins e tempo de sessão por usuário"
+            >
+                <div className="space-y-4">
+                    {!isMaster && (
+                        <div className="border border-amber-500/30 bg-amber-500/5 rounded-lg p-3 flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+                            <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <p>Apenas o <strong>admin master</strong> pode alterar esta configuração.</p>
+                        </div>
+                    )}
+                    <div className="flex items-center justify-between border rounded-lg p-4 bg-muted/10">
+                        <div>
+                            <p className="font-medium text-sm">Rastreio de sessões ativo</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Quando ativo, registra logins, logouts e tempo de sessão de alunos e mentores. Histórico mantido por 90 dias.
+                            </p>
+                        </div>
+                        <Switch
+                            checked={form.tracking_enabled === "true"}
+                            onCheckedChange={(val) => set("tracking_enabled", val ? "true" : "false")}
                             disabled={!isMaster}
                         />
                     </div>
                     <div className="flex justify-end pt-1">
                         <Button
                             size="sm"
-                            onClick={() => saveSection(["student_upload_enabled"])}
+                            onClick={() => saveSection(["tracking_enabled"])}
                             disabled={isSaving || !isMaster}
                             className="gap-2"
                         >

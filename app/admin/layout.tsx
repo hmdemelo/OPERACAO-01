@@ -2,6 +2,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar"
 import { AppHeader } from "@/components/layout/AppHeader"
 import { MobileSidebar } from "@/components/layout/MobileSidebar"
 import { SidebarProvider } from "@/components/layout/SidebarContext"
+import { HeartbeatEmitter } from "@/components/layout/HeartbeatEmitter"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/authOptions"
 
@@ -32,6 +33,7 @@ export default async function AdminLayout({
                     <main className="flex-1 p-6 md:p-8 overflow-y-auto w-full overflow-x-hidden">
                         {children}
                     </main>
+                    <HeartbeatEmitter />
                 </div>
             </div>
         </SidebarProvider>

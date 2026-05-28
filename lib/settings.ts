@@ -20,6 +20,8 @@ export const SETTING_DEFAULTS: Record<string, string> = {
     ai_model: "claude-opus-4-7",
     ai_api_key: "",
     student_upload_enabled: "true",
+    student_questions_enabled: "true",
+    tracking_enabled: "true",
 }
 
 export const SETTING_KEYS = Object.keys(SETTING_DEFAULTS)

@@ -3,6 +3,7 @@ import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/db"
 import bcrypt from "bcrypt"
+import { getSetting } from "@/lib/settings"
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -86,5 +87,40 @@ export const authOptions: NextAuthOptions = {
     },
     pages: {
         signIn: "/signin",
+    },
+    events: {
+        async signIn({ user }) {
+            try {
+                const enabled = await getSetting("tracking_enabled")
+                if (enabled === "false") return
+                await prisma.userSession.create({
+                    data: { userId: user.id!, loginAt: new Date(), lastSeenAt: new Date() },
+                })
+            } catch (e) {
+                logger.error("[TRACKING] signIn error", e)
+            }
+        },
+        async signOut({ token }) {
+            try {
+                const enabled = await getSetting("tracking_enabled")
+                if (enabled === "false") return
+                const userId = token?.id as string | undefined
+                if (!userId) return
+                const session = await prisma.userSession.findFirst({
+                    where: { userId, logoutAt: null },
+                    orderBy: { loginAt: "desc" },
+                    select: { id: true, loginAt: true },
+                })
+                if (!session) return
+                const now = new Date()
+                const durationMin = Math.round((now.getTime() - session.loginAt.getTime()) / 60000)
+                await prisma.userSession.update({
+                    where: { id: session.id },
+                    data: { logoutAt: now, durationMin },
+                })
+            } catch (e) {
+                logger.error("[TRACKING] signOut error", e)
+            }
+        },
     },
 }
