@@ -4,7 +4,7 @@ import { redirect, notFound } from "next/navigation"
 import { prisma } from "@/lib/db"
 import { PieChart, type Slice } from "@/components/student/grade/PieChart"
 import { Breadcrumb } from "@/components/student/grade/Breadcrumb"
-import { colorForId } from "@/lib/grade/colors"
+import { defaultColorForId } from "@/lib/dashboard/visualTokens"
 
 export default async function Fase1BlockPage(props: { params: Promise<{ blockId: string }> }) {
     const session = await getServerSession(authOptions)
@@ -16,7 +16,7 @@ export default async function Fase1BlockPage(props: { params: Promise<{ blockId:
     const { blockId } = await props.params
 
     const block = await prisma.studyBlock.findFirst({
-        where: { id: blockId, grid: { userId: session.user.id }, visible: true },
+        where: { id: blockId, grid: { userId: session.user.id, active: true }, visible: true },
         include: {
             subjectV2: { select: { id: true, name: true } },
             contentBlocks: {
@@ -32,7 +32,11 @@ export default async function Fase1BlockPage(props: { params: Promise<{ blockId:
 
     if (!block) notFound()
 
-    const color = colorForId(block.id)
+    const colorPref = await prisma.subjectColorPreference.findUnique({
+        where: { userId_subjectV2Id: { userId: session.user.id, subjectV2Id: block.subjectV2.id } },
+        select: { color: true },
+    })
+    const color = colorPref?.color ?? defaultColorForId(block.subjectV2.id)
     const slices: Slice[] = block.contentBlocks.map((c) => {
         const done = c.topicBlocks.filter((t) => t.completed).length
         return {

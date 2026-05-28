@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 import { StudyGridEditor } from "@/components/admin/StudyGridEditor"
 import { SimulationEditor } from "@/components/admin/v2/SimulationEditor"
 import { Fase2Viewer } from "@/components/admin/v2/Fase2Viewer"
+import { CycleManager } from "@/components/admin/v2/CycleManager"
 import { canManageStudentGrade } from "@/lib/auth/gradeAccess"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -28,15 +29,13 @@ export default async function AdminStudentGradePage({ params }: PageProps) {
         redirect("/admin/schedules")
     }
 
-    let student, grid, subjects, simulations
+    let student, grid, subjects, simulations, allCycles
     try {
         console.log("[GRADE PAGE] Fetching data...")
-        ;[student, grid, subjects, simulations] = await Promise.all([
+        ;[student, grid, subjects, simulations, allCycles] = await Promise.all([
             prisma.user.findUnique({ where: { id }, select: { name: true } }),
-            prisma.studyGrid.upsert({
-                where: { userId: id },
-                create: { userId: id },
-                update: {},
+            prisma.studyGrid.findFirst({
+                where: { userId: id, active: true },
                 include: {
                     blocks: {
                         orderBy: { order: "asc" },
@@ -64,7 +63,7 @@ export default async function AdminStudentGradePage({ params }: PageProps) {
                 select: { id: true, name: true },
             }),
             prisma.simulation.findMany({
-                where: { grid: { userId: id } },
+                where: { grid: { userId: id, active: true } },
                 orderBy: { date: "desc" },
                 include: {
                     blocks: {
@@ -74,12 +73,40 @@ export default async function AdminStudentGradePage({ params }: PageProps) {
                     },
                 },
             }),
+            prisma.studyGrid.findMany({
+                where: { userId: id },
+                orderBy: { cycleNumber: "asc" },
+                select: {
+                    id: true,
+                    cycleNumber: true,
+                    cycleLabel: true,
+                    active: true,
+                    completedAt: true,
+                    createdAt: true,
+                    blocks: {
+                        where: { visible: true },
+                        select: {
+                            contentBlocks: {
+                                where: { visible: true },
+                                select: {
+                                    topicBlocks: {
+                                        where: { visible: true },
+                                        select: { completed: true },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            }),
         ])
         console.log("[GRADE PAGE] Data fetched:", {
             hasStudent: !!student,
-            blocks: grid.blocks.length,
+            hasActiveGrid: !!grid,
+            blocks: grid?.blocks.length ?? 0,
             subjects: subjects.length,
             simulations: simulations.length,
+            cycles: allCycles.length,
         })
     } catch (error) {
         console.error("[GRADE PAGE ERROR]", error)
@@ -91,7 +118,7 @@ export default async function AdminStudentGradePage({ params }: PageProps) {
     const formattedName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[1]}` : nameParts[0] || "Aluno"
 
     // Serialize blocks: strip createdAt/updatedAt Date fields before passing to Client Components
-    const serializedBlocks = grid.blocks.map((b) => ({
+    const serializedBlocks = (grid?.blocks ?? []).map((b) => ({
         id: b.id,
         subjectV2Id: b.subjectV2Id,
         order: b.order,
@@ -163,15 +190,42 @@ export default async function AdminStudentGradePage({ params }: PageProps) {
         }))
         .filter((b) => b.contentBlocks.length > 0)
 
+    const cyclesSummary = allCycles.map((c) => {
+        let total = 0
+        let done = 0
+        for (const b of c.blocks) {
+            for (const cb of b.contentBlocks) {
+                for (const tb of cb.topicBlocks) {
+                    total++
+                    if (tb.completed) done++
+                }
+            }
+        }
+        return {
+            id: c.id,
+            cycleNumber: c.cycleNumber,
+            cycleLabel: c.cycleLabel,
+            active: c.active,
+            completedAt: c.completedAt ? c.completedAt.toISOString() : null,
+            createdAt: c.createdAt.toISOString(),
+            topicsDone: done,
+            topicsTotal: total,
+        }
+    })
+
+    const activeCycle = cyclesSummary.find((c) => c.active) ?? null
+    const nextCycleNumber = (cyclesSummary.reduce((m, c) => Math.max(m, c.cycleNumber), 0) || 0) + 1
+
     console.log("[GRADE PAGE] Rendering with:", {
         blocks: serializedBlocks.length,
         fase2Blocks: fase2Blocks.length,
         availableBlocks: availableBlocks.length,
         simulations: serializedSimulations.length,
+        cycles: cyclesSummary.length,
     })
 
     return (
-        <div className="container mx-auto p-6 space-y-4">
+        <div className="space-y-4">
             <a
                 href="/admin/v2/students"
                 className="text-sm font-medium hover:underline text-muted-foreground flex items-center gap-1"
@@ -181,20 +235,40 @@ export default async function AdminStudentGradePage({ params }: PageProps) {
 
             <h1 className="text-2xl font-black uppercase tracking-tighter">{formattedName}</h1>
 
-            <Tabs defaultValue="grade">
+            <Tabs defaultValue="fase1">
                 <TabsList>
-                    <TabsTrigger value="grade">Grade</TabsTrigger>
+                    <TabsTrigger value="fase1">Fase 1</TabsTrigger>
                     <TabsTrigger value="fase2">Fase 2</TabsTrigger>
                     <TabsTrigger value="fase3">Fase 3</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="grade" className="mt-4">
-                    <StudyGridEditor
+                <TabsContent value="fase1" className="mt-4 space-y-8">
+                    <CycleManager
                         studentId={id}
-                        studentName={formattedName}
-                        subjects={subjects}
-                        initialBlocks={serializedBlocks}
+                        cycles={cyclesSummary}
+                        nextCycleNumber={nextCycleNumber}
                     />
+
+                    <div className="border-t pt-6">
+                        <h2 className="text-lg font-bold mb-1">Grade do ciclo ativo</h2>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            {activeCycle
+                                ? `Editando a grade do Ciclo ${activeCycle.cycleNumber} — ${activeCycle.cycleLabel}.`
+                                : "Crie um ciclo acima para editar a grade do aluno."}
+                        </p>
+                        {activeCycle ? (
+                            <StudyGridEditor
+                                studentId={id}
+                                studentName={formattedName}
+                                subjects={subjects}
+                                initialBlocks={serializedBlocks}
+                            />
+                        ) : (
+                            <div className="border rounded-lg p-8 text-center text-muted-foreground">
+                                Sem ciclo ativo.
+                            </div>
+                        )}
+                    </div>
                 </TabsContent>
 
                 <TabsContent value="fase2" className="mt-4">

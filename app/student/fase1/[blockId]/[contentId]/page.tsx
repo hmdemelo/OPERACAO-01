@@ -20,7 +20,7 @@ export default async function Fase1ContentPage(props: {
         where: {
             id: contentId,
             visible: true,
-            block: { id: blockId, visible: true, grid: { userId: session.user.id } },
+            block: { id: blockId, visible: true, grid: { userId: session.user.id, active: true } },
         },
         include: {
             contentV2: { select: { id: true, name: true } },

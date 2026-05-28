@@ -59,8 +59,9 @@ export async function GET() {
                 include: { items: true },
                 orderBy: { startDate: "desc" },
             }),
-            prisma.studyGrid.findUnique({
+            prisma.studyGrid.findMany({
                 where: { userId },
+                orderBy: { cycleNumber: "asc" },
                 include: {
                     blocks: {
                         include: {

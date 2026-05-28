@@ -25,11 +25,14 @@ export async function POST(req: Request, props: { params: Promise<{ studentId: s
     try {
         const body = createBlockSchema.parse(await req.json())
 
-        const grid = await prisma.studyGrid.upsert({
-            where: { userId: studentId },
-            create: { userId: studentId },
-            update: {},
+        const grid = await prisma.studyGrid.findFirst({
+            where: { userId: studentId, active: true },
+            select: { id: true },
         })
+
+        if (!grid) {
+            return new NextResponse("Aluno não possui ciclo ativo", { status: 400 })
+        }
 
         const last = await prisma.studyBlock.findFirst({
             where: { gridId: grid.id },

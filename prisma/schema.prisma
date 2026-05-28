@@ -37,7 +37,9 @@ model User {
   uploadedQuestions Question[]        @relation("QuestionUploader")
   approvedQuestions Question[]        @relation("QuestionApprover")
   questionAnswers   QuestionAnswer[]
-  studyGrid         StudyGrid?
+  studyGrids        StudyGrid[]
+  subjectColors     SubjectColorPreference[]
+  sessions          UserSession[]
 }
 
 model MentorshipLink {
@@ -298,23 +300,30 @@ model QuestionAnswer {
 
 model StudyGrid {
   id          String       @id @default(cuid())
-  userId      String       @unique
+  userId      String
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cycleNumber Int          @default(1)
+  cycleLabel  String       @db.VarChar(60)
+  active      Boolean      @default(true)
+  completedAt DateTime?
   blocks      StudyBlock[]
   simulations Simulation[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
+  @@index([userId])
 }
 
 model SubjectV2 {
-  id        String       @id @default(cuid())
-  name      String
-  order     Int          @default(0)
-  active    Boolean      @default(true)
-  contents  ContentV2[]
-  blocks    StudyBlock[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id              String                   @id @default(cuid())
+  name            String
+  order           Int                      @default(0)
+  active          Boolean                  @default(true)
+  contents        ContentV2[]
+  blocks          StudyBlock[]
+  colorPreferences SubjectColorPreference[]
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
 }
 
 model ContentV2 {
@@ -428,4 +437,35 @@ model StudyTopicBlock {
 
   @@index([contentBlockId])
   @@index([topicV2Id])
+}
+
+model UserSession {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loginAt     DateTime  @default(now())
+  logoutAt    DateTime?
+  lastSeenAt  DateTime  @default(now())
+  durationMin Int?
+  ipAddress   String?   @db.VarChar(45)
+  userAgent   String?   @db.VarChar(255)
+
+  @@index([userId])
+  @@index([loginAt])
+}
+
+/// Per-student color preference for V2 subjects (Fase 1 pizza). Only the
+/// student sees their own colors; admins/mentors keep the system defaults.
+model SubjectColorPreference {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectV2Id String
+  subjectV2   SubjectV2 @relation(fields: [subjectV2Id], references: [id], onDelete: Cascade)
+  color       String   @db.VarChar(9)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, subjectV2Id])
+  @@index([userId])
 }

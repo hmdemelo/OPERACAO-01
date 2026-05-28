@@ -38,10 +38,8 @@ export async function GET(req: Request, props: { params: Promise<{ studentId: st
         return new NextResponse("Acesso negado", { status: 403 })
     }
 
-    const grid = await prisma.studyGrid.upsert({
-        where: { userId: studentId },
-        create: { userId: studentId },
-        update: {},
+    const grid = await prisma.studyGrid.findFirst({
+        where: { userId: studentId, active: true },
         include: gridInclude,
     })
 

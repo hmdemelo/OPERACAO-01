@@ -27,11 +27,8 @@ export async function GET(req: Request) {
         return new NextResponse("Acesso negado", { status: 403 })
     }
 
-    const grid = await prisma.studyGrid.findUnique({ where: { userId: studentId }, select: { id: true } })
-    if (!grid) return NextResponse.json([])
-
     const simulations = await prisma.simulation.findMany({
-        where: { gridId: grid.id },
+        where: { grid: { userId: studentId, active: true } },
         orderBy: { date: "desc" },
         include: {
             blocks: {
@@ -58,8 +55,11 @@ export async function POST(req: Request) {
         return new NextResponse("Acesso negado", { status: 403 })
     }
 
-    const grid = await prisma.studyGrid.findUnique({ where: { userId: body.studentId }, select: { id: true } })
-    if (!grid) return new NextResponse("Grade não encontrada", { status: 404 })
+    const grid = await prisma.studyGrid.findFirst({
+        where: { userId: body.studentId, active: true },
+        select: { id: true },
+    })
+    if (!grid) return new NextResponse("Aluno não possui ciclo ativo", { status: 404 })
 
     const simulation = await prisma.simulation.create({
         data: {

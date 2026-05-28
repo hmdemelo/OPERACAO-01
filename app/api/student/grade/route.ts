@@ -10,8 +10,8 @@ export async function GET() {
         return new NextResponse("Não autorizado", { status: 401 })
     }
 
-    const grid = await prisma.studyGrid.findUnique({
-        where: { userId: session.user.id },
+    const grid = await prisma.studyGrid.findFirst({
+        where: { userId: session.user.id, active: true },
         include: {
             blocks: {
                 orderBy: { order: "asc" },

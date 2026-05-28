@@ -7,14 +7,8 @@ export async function GET() {
     const session = await getServerSession(authOptions)
     if (!session?.user) return new NextResponse("Não autorizado", { status: 401 })
 
-    const grid = await prisma.studyGrid.findUnique({
-        where: { userId: session.user.id },
-        select: { id: true },
-    })
-    if (!grid) return NextResponse.json([])
-
     const simulations = await prisma.simulation.findMany({
-        where: { gridId: grid.id },
+        where: { grid: { userId: session.user.id, active: true } },
         orderBy: { date: "desc" },
         include: {
             blocks: {

@@ -1,10 +1,13 @@
 'use client'
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { SubjectColorPicker } from "./SubjectColorPicker"
 
 export interface Slice {
     id: string
+    /** SubjectV2.id — used to persist the color preference. */
+    subjectV2Id?: string
     label: string
     color: string
     done: number
@@ -19,6 +22,8 @@ interface Props {
 
 const GAP = 0.028
 const ALMOST_DONE_THRESHOLD = 0.8
+const SWATCH_SIZE = 14
+const SWATCH_GAP = 4
 
 function polar(cx: number, cy: number, r: number, angle: number) {
     return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) }
@@ -39,15 +44,21 @@ function hexToRgba(hex: string, alpha: number) {
     return `rgba(${r},${g},${b},${alpha})`
 }
 
-export function PieChart({ slices, radius = 190 }: Props) {
+export function PieChart({ slices: initialSlices, radius = 190 }: Props) {
     const router = useRouter()
     const [hover, setHover] = useState<string | null>(null)
     const [mounted, setMounted] = useState(false)
+    const [overrides, setOverrides] = useState<Record<string, string>>({})
 
     useEffect(() => {
         const t = requestAnimationFrame(() => setMounted(true))
         return () => cancelAnimationFrame(t)
     }, [])
+
+    const slices = useMemo(
+        () => initialSlices.map(s => (s.subjectV2Id && overrides[s.subjectV2Id] ? { ...s, color: overrides[s.subjectV2Id] } : s)),
+        [initialSlices, overrides],
+    )
 
     const n = slices.length
     if (n === 0) return null
@@ -189,7 +200,9 @@ export function PieChart({ slices, radius = 190 }: Props) {
                 const connKnee = polar(cx, cy, rOuter + 26, mid)
                 const isRight = connKnee.x >= cx
                 const lineEndX = isRight ? connKnee.x + 20 : connKnee.x - 20
-                const textX = isRight ? lineEndX + 6 : lineEndX - 6
+                // Texto abre espaço para o swatch entre o conector e o label.
+                const textPad = SWATCH_SIZE + SWATCH_GAP * 2
+                const textX = isRight ? lineEndX + textPad : lineEndX - textPad
                 const textAnchor = isRight ? "start" : "end"
 
                 return (
@@ -274,6 +287,39 @@ export function PieChart({ slices, radius = 190 }: Props) {
 
             {/* anel externo decorativo */}
             <circle cx={cx} cy={cy} r={rOuter} fill="none" stroke="hsl(var(--border))" strokeWidth={1} opacity={0.4} />
+
+            {/* ── Camada 5: swatch picker — sempre encostado ao conector ── */}
+            {slices.map((slice, i) => {
+                if (!slice.subjectV2Id) return null
+                const start = -Math.PI / 2 + i * step + halfGap
+                const end = start + step - 2 * halfGap
+                const mid = (start + end) / 2
+                const connKnee = polar(cx, cy, rOuter + 26, mid)
+                const isRight = connKnee.x >= cx
+                const lineEndX = isRight ? connKnee.x + 20 : connKnee.x - 20
+                // Swatch encostado ao fim do conector, no lado da pizza,
+                // antes do texto. Alinhado verticalmente ao centro do par
+                // nome+contagem (centro está em connKnee.y + ~1).
+                const px = isRight ? lineEndX + SWATCH_GAP : lineEndX - SWATCH_GAP - SWATCH_SIZE
+                const py = connKnee.y - SWATCH_SIZE / 2
+                return (
+                    <foreignObject
+                        key={`pick-${slice.id}`}
+                        x={px}
+                        y={py}
+                        width={SWATCH_SIZE}
+                        height={SWATCH_SIZE}
+                        style={{ overflow: "visible" }}
+                    >
+                        <SubjectColorPicker
+                            subjectId={slice.subjectV2Id}
+                            currentColor={slice.color}
+                            label={slice.label}
+                            onChange={(c) => setOverrides(o => ({ ...o, [slice.subjectV2Id!]: c }))}
+                        />
+                    </foreignObject>
+                )
+            })}
         </svg>
     )
 }

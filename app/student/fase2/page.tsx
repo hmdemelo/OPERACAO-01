@@ -11,8 +11,8 @@ export default async function Fase2Page() {
         redirect("/signin")
     }
 
-    const grid = await prisma.studyGrid.findUnique({
-        where: { userId: session.user.id },
+    const grid = await prisma.studyGrid.findFirst({
+        where: { userId: session.user.id, active: true },
         include: {
             blocks: {
                 where: { visible: true },
