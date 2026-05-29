@@ -57,25 +57,10 @@ export default function LoginForm() {
             }
 
             if (res?.ok) {
-                // Determine destination based on role
-                try {
-                    const sessionRes = await fetch("/api/auth/session")
-                    const session = await sessionRes.json()
-                    const role = session?.user?.role
-
-                    if (role === "ADMIN") {
-                        router.push("/admin/dashboard")
-                    } else if (role === "STUDENT") {
-                        router.push("/student/dashboard")
-                    } else {
-                        router.push("/")
-                    }
-                    router.refresh()
-                } catch (error) {
-                    logger.error("Session fetch error:", error)
-                    router.push("/")
-                    router.refresh()
-                }
+                // Destino resolvido no servidor (/post-login), evitando um
+                // round-trip extra de fetch da sessão no cliente.
+                router.push("/post-login")
+                router.refresh()
                 // Leave isLoading true during navigation
             } else {
                 setError("Ocorreu um erro desconhecido")

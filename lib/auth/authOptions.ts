@@ -53,8 +53,8 @@ export const authOptions: NextAuthOptions = {
     ],
     session: {
         strategy: "jwt",
-        maxAge: 1 * 60 * 60, // 1 hora de inatividade absoluta
-        updateAge: 0, // Atualiza o cronômetro em cada requisição para máxima precisão
+        maxAge: 1 * 60 * 60, // 1 hora de inatividade (janela deslizante)
+        updateAge: 5 * 60, // Renova o cookie no máximo a cada 5 min, evitando re-assinar o JWT em toda requisição
     },
     callbacks: {
         async jwt({ token, user, trigger, session }) {

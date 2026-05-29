@@ -6,6 +6,7 @@ import { PieChart, type Slice } from "@/components/student/grade/PieChart"
 import { Breadcrumb } from "@/components/student/grade/Breadcrumb"
 import { CycleAchievements } from "@/components/student/grade/CycleAchievements"
 import { defaultColorForId } from "@/lib/dashboard/visualTokens"
+import { MotivationBanner } from "@/components/student/MotivationBanner"
 
 export default async function Fase1Page() {
     const session = await getServerSession(authOptions)
@@ -108,6 +109,7 @@ export default async function Fase1Page() {
     return (
         <div className="container mx-auto p-6 space-y-6">
             <Breadcrumb items={[{ label: "Fase 1" }]} />
+            <MotivationBanner />
             <div className="flex flex-col gap-1">
                 <h1 className="text-3xl font-black uppercase tracking-tighter">Fase 1</h1>
                 {cycleTitle && (

@@ -26,7 +26,20 @@ export const SETTING_DEFAULTS: Record<string, string> = {
 
 export const SETTING_KEYS = Object.keys(SETTING_DEFAULTS)
 
+// Settings mudam raramente mas são lidas em quase toda requisição (login, layouts).
+// Cache em memória com TTL curto evita um findMany por leitura; writes invalidam.
+const SETTINGS_TTL_MS = 60_000
+let settingsCache: { value: Record<string, string>; expiresAt: number } | null = null
+
+function invalidateSettingsCache() {
+    settingsCache = null
+}
+
 export async function getAllSettings(): Promise<Record<string, string>> {
+    if (settingsCache && settingsCache.expiresAt > Date.now()) {
+        return settingsCache.value
+    }
+
     const rows = await prisma.systemSettings.findMany()
     const result = { ...SETTING_DEFAULTS }
 
@@ -34,6 +47,7 @@ export async function getAllSettings(): Promise<Record<string, string>> {
         result[row.key] = row.value
     }
 
+    settingsCache = { value: result, expiresAt: Date.now() + SETTINGS_TTL_MS }
     return result
 }
 
@@ -52,6 +66,7 @@ export async function setSetting(key: string, value: string): Promise<void> {
         update: { value },
         create: { key, value },
     })
+    invalidateSettingsCache()
 }
 
 export async function setManySettings(entries: { key: string; value: string }[]): Promise<void> {
@@ -69,6 +84,7 @@ export async function setManySettings(entries: { key: string; value: string }[])
             })
         )
     )
+    invalidateSettingsCache()
 }
 
 // Typed getters for convenience

@@ -10,6 +10,7 @@ import {
 } from "@/lib/metrics/studentMetrics"
 
 import { DashboardContainer } from "@/components/student/DashboardContainer"
+import { MotivationBanner } from "@/components/student/MotivationBanner"
 
 export default async function StudentDashboardPage() {
     const session = await getServerSession(authOptions)
@@ -39,7 +40,8 @@ export default async function StudentDashboardPage() {
     ])
 
     return (
-        <div className="container mx-auto p-6">
+        <div className="container mx-auto p-6 space-y-6">
+            <MotivationBanner />
             <DashboardContainer
                 initialData={{
                     weeklySummary,
