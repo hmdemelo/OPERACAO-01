@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 
+import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -117,7 +118,12 @@ export default function LoginForm() {
                         />
                     </div>
                     <Button className="w-full" type="submit" disabled={isLoading}>
-                        {isLoading ? "Entrando..." : "Entrar"}
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Entrando...
+                            </>
+                        ) : "Entrar"}
                     </Button>
                 </form>
             </CardContent>
