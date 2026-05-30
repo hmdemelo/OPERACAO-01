@@ -42,18 +42,31 @@ function parseUserAgent(ua: string | null) {
     return "Desktop"
 }
 
+type Stats = {
+    activeNow: number
+    sessionsToday: number
+    total: number
+    avgDurationMin: number
+}
+
+// Sessão ativa há muitas horas costuma ser aba esquecida aberta, não uso real.
+const LONG_SESSION_MIN = 4 * 60
+
 export default function AccessLogPage() {
     const [rows, setRows] = useState<SessionRow[]>([])
     const [total, setTotal] = useState(0)
+    const [stats, setStats] = useState<Stats>({ activeNow: 0, sessionsToday: 0, total: 0, avgDurationMin: 0 })
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState("")
     const [loading, setLoading] = useState(true)
     const limit = 50
 
-    const load = useCallback(async (p: number) => {
+    const load = useCallback(async (p: number, q: string) => {
         setLoading(true)
         try {
-            const res = await fetch(`/api/admin/access-log?page=${p}&limit=${limit}`)
+            const params = new URLSearchParams({ page: String(p), limit: String(limit) })
+            if (q) params.set("q", q)
+            const res = await fetch(`/api/admin/access-log?${params}`)
             if (res.status === 403) {
                 toast.error("Acesso restrito ao admin master")
                 return
@@ -62,6 +75,7 @@ export default function AccessLogPage() {
             const data = await res.json()
             setRows(data.rows)
             setTotal(data.total)
+            setStats(data.stats)
             setPage(p)
         } catch {
             toast.error("Erro ao carregar histórico")
@@ -70,20 +84,11 @@ export default function AccessLogPage() {
         }
     }, [])
 
-    useEffect(() => { load(1) }, [load])
-
-    const activeNow = rows.filter(r => r.isActive).length
-    const todayRows = rows.filter(r => new Date(r.loginAt).toDateString() === new Date().toDateString())
-    const avgDuration = rows.length > 0
-        ? Math.round(rows.reduce((s, r) => s + r.durationMin, 0) / rows.length)
-        : 0
-
-    const filtered = search
-        ? rows.filter(r =>
-            r.userName?.toLowerCase().includes(search.toLowerCase()) ||
-            r.userEmail?.toLowerCase().includes(search.toLowerCase())
-        )
-        : rows
+    // Busca server-side com debounce: volta para a página 1 a cada termo novo.
+    useEffect(() => {
+        const id = setTimeout(() => { load(1, search) }, 350)
+        return () => clearTimeout(id)
+    }, [search, load])
 
     const totalPages = Math.ceil(total / limit)
 
@@ -99,7 +104,7 @@ export default function AccessLogPage() {
                         Histórico de logins e tempo de sessão — últimos 90 dias
                     </p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => load(page)} disabled={loading} className="gap-2">
+                <Button variant="outline" size="sm" onClick={() => load(page, search)} disabled={loading} className="gap-2">
                     <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
                     Atualizar
                 </Button>
@@ -109,19 +114,21 @@ export default function AccessLogPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="border rounded-lg p-4 bg-card">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider">Ativos agora</p>
-                    <p className="text-3xl font-black mt-1 text-primary">{activeNow}</p>
+                    <p className="text-3xl font-black mt-1 text-primary">{stats.activeNow}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">usuários distintos</p>
                 </div>
                 <div className="border rounded-lg p-4 bg-card">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider">Sessões hoje</p>
-                    <p className="text-3xl font-black mt-1">{todayRows.length}</p>
+                    <p className="text-3xl font-black mt-1">{stats.sessionsToday}</p>
                 </div>
                 <div className="border rounded-lg p-4 bg-card">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider">Total no período</p>
-                    <p className="text-3xl font-black mt-1">{total}</p>
+                    <p className="text-3xl font-black mt-1">{stats.total}</p>
                 </div>
                 <div className="border rounded-lg p-4 bg-card">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider">Duração média</p>
-                    <p className="text-3xl font-black mt-1">{formatDuration(avgDuration)}</p>
+                    <p className="text-3xl font-black mt-1">{formatDuration(stats.avgDurationMin)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">apenas sessões encerradas</p>
                 </div>
             </div>
 
@@ -151,10 +158,10 @@ export default function AccessLogPage() {
                         <tbody>
                             {loading ? (
                                 <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Carregando...</td></tr>
-                            ) : filtered.length === 0 ? (
+                            ) : rows.length === 0 ? (
                                 <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Nenhuma sessão encontrada.</td></tr>
                             ) : (
-                                filtered.map(r => (
+                                rows.map(r => (
                                     <tr key={r.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
                                         <td className="p-3">
                                             <div className="flex items-center gap-2">
@@ -190,10 +197,20 @@ export default function AccessLogPage() {
                                         </td>
                                         <td className="p-3">
                                             {r.isActive ? (
-                                                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-500">
-                                                    <Circle className="h-2 w-2 fill-emerald-500" />
-                                                    Online
-                                                </span>
+                                                r.durationMin >= LONG_SESSION_MIN ? (
+                                                    <span
+                                                        className="flex items-center gap-1.5 text-xs font-bold text-amber-500"
+                                                        title="Sessão ativa há muitas horas — provável aba esquecida aberta"
+                                                    >
+                                                        <Circle className="h-2 w-2 fill-amber-500" />
+                                                        Online (longa)
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-500">
+                                                        <Circle className="h-2 w-2 fill-emerald-500" />
+                                                        Online
+                                                    </span>
+                                                )
                                             ) : (
                                                 <span className="text-xs text-muted-foreground">Encerrada</span>
                                             )}
@@ -208,11 +225,11 @@ export default function AccessLogPage() {
                     <div className="p-4 border-t flex items-center justify-between text-sm text-muted-foreground">
                         <span>{total} sessões no total</span>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={() => load(page - 1)} disabled={page <= 1 || loading}>
+                            <Button variant="outline" size="sm" onClick={() => load(page - 1, search)} disabled={page <= 1 || loading}>
                                 Anterior
                             </Button>
                             <span className="flex items-center px-2">{page} / {totalPages}</span>
-                            <Button variant="outline" size="sm" onClick={() => load(page + 1)} disabled={page >= totalPages || loading}>
+                            <Button variant="outline" size="sm" onClick={() => load(page + 1, search)} disabled={page >= totalPages || loading}>
                                 Próxima
                             </Button>
                         </div>

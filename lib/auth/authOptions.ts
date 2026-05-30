@@ -91,6 +91,24 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.id = user.id
                 token.role = user.role
+
+                // Cria a UserSession já no login e guarda o ID no token, para que o
+                // heartbeat atualize exatamente esta sessão (e não todas as abertas
+                // do usuário). Cada login/navegador = uma linha; abas compartilham o
+                // mesmo cookie e portanto o mesmo sessionId.
+                try {
+                    const enabled = await getSetting("tracking_enabled")
+                    if (enabled !== "false") {
+                        const now = new Date()
+                        const us = await prisma.userSession.create({
+                            data: { userId: user.id, loginAt: now, lastSeenAt: now },
+                            select: { id: true },
+                        })
+                        token.sessionId = us.id
+                    }
+                } catch (e) {
+                    logger.error("[TRACKING] criação de sessão falhou", e)
+                }
             }
 
             // Se o admin atualizar o perfil, podemos forçar o update aqui futuramente
@@ -104,6 +122,7 @@ export const authOptions: NextAuthOptions = {
             if (session?.user) {
                 session.user.id = token.id
                 session.user.role = token.role
+                session.sessionId = token.sessionId
             }
             return session
         },
@@ -119,33 +138,20 @@ export const authOptions: NextAuthOptions = {
         signIn: "/signin",
     },
     events: {
-        async signIn({ user }) {
-            try {
-                const enabled = await getSetting("tracking_enabled")
-                if (enabled === "false") return
-                await prisma.userSession.create({
-                    data: { userId: user.id!, loginAt: new Date(), lastSeenAt: new Date() },
-                })
-            } catch (e) {
-                logger.error("[TRACKING] signIn error", e)
-            }
-        },
+        // A criação da sessão acontece no callback jwt (precisa gravar o ID no token).
         async signOut({ token }) {
             try {
-                const enabled = await getSetting("tracking_enabled")
-                if (enabled === "false") return
-                const userId = token?.id as string | undefined
-                if (!userId) return
-                const session = await prisma.userSession.findFirst({
-                    where: { userId, logoutAt: null },
-                    orderBy: { loginAt: "desc" },
-                    select: { id: true, loginAt: true },
+                const sessionId = token?.sessionId
+                if (!sessionId) return
+                const us = await prisma.userSession.findUnique({
+                    where: { id: sessionId },
+                    select: { logoutAt: true, loginAt: true },
                 })
-                if (!session) return
+                if (!us || us.logoutAt) return // já fechada
                 const now = new Date()
-                const durationMin = Math.round((now.getTime() - session.loginAt.getTime()) / 60000)
+                const durationMin = Math.round((now.getTime() - us.loginAt.getTime()) / 60000)
                 await prisma.userSession.update({
-                    where: { id: session.id },
+                    where: { id: sessionId },
                     data: { logoutAt: now, durationMin },
                 })
             } catch (e) {
