@@ -5,8 +5,56 @@ import { getToken } from "next-auth/jwt"
 // Caminhos que não exigem autenticação nem respeitam manutenção
 const PUBLIC_PATHS = ["/signin", "/maintenance", "/api/auth", "/api/maintenance-status"]
 
+// Rate limiter para tentativas de login — persiste dentro da mesma Edge isolate.
+// Não é compartilhado entre instâncias paralelas, mas é eficaz contra bots
+// de IP único (o caso mais comum de credential stuffing).
+const LOGIN_WINDOW_MS = 15 * 60 * 1000 // 15 minutos
+const LOGIN_MAX_ATTEMPTS = 5
+
+const loginAttempts = new Map<string, { count: number; resetAt: number }>()
+
+function checkLoginRateLimit(ip: string): { limited: boolean; retryAfter: number } {
+    const now = Date.now()
+    const record = loginAttempts.get(ip)
+
+    if (!record || now > record.resetAt) {
+        loginAttempts.set(ip, { count: 1, resetAt: now + LOGIN_WINDOW_MS })
+        return { limited: false, retryAfter: 0 }
+    }
+
+    if (record.count >= LOGIN_MAX_ATTEMPTS) {
+        return { limited: true, retryAfter: Math.ceil((record.resetAt - now) / 1000) }
+    }
+
+    record.count++
+    return { limited: false, retryAfter: 0 }
+}
+
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
+
+    // 0. Rate limiting no endpoint de login — intercepta antes de liberar /api/auth
+    if (pathname === "/api/auth/callback/credentials" && request.method === "POST") {
+        const ip =
+            request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+            request.headers.get("x-real-ip") ??
+            "unknown"
+
+        const { limited, retryAfter } = checkLoginRateLimit(ip)
+
+        if (limited) {
+            return new NextResponse(
+                JSON.stringify({ error: "Muitas tentativas de login. Tente novamente em alguns minutos." }),
+                {
+                    status: 429,
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Retry-After": String(retryAfter),
+                    },
+                }
+            )
+        }
+    }
 
     // 1. Ignorar arquivos estáticos e internos
     if (

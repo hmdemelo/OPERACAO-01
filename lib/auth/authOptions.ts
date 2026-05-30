@@ -5,6 +5,28 @@ import { prisma } from "@/lib/db"
 import bcrypt from "bcrypt"
 import { getSetting } from "@/lib/settings"
 
+// Segunda camada de rate limiting (Node.js runtime — persiste mais que a edge isolate).
+// A primeira camada está no middleware.ts.
+const AUTH_WINDOW_MS = 15 * 60 * 1000
+const AUTH_MAX_ATTEMPTS = 10 // mais leniente que o middleware; edge já bloqueou os óbvios
+
+const authAttempts = new Map<string, { count: number; resetAt: number }>()
+
+function isAuthBlocked(key: string): boolean {
+    const now = Date.now()
+    const record = authAttempts.get(key)
+
+    if (!record || now > record.resetAt) {
+        authAttempts.set(key, { count: 1, resetAt: now + AUTH_WINDOW_MS })
+        return false
+    }
+
+    if (record.count >= AUTH_MAX_ATTEMPTS) return true
+
+    record.count++
+    return false
+}
+
 export const authOptions: NextAuthOptions = {
     providers: [
         CredentialsProvider({
@@ -16,6 +38,14 @@ export const authOptions: NextAuthOptions = {
             async authorize(credentials) {
                 try {
                     if (!credentials?.email || !credentials?.password) {
+                        return null
+                    }
+
+                    // Rate limit por email — bloqueia ataques direcionados a uma conta
+                    // mesmo que venham de IPs rotacionados.
+                    const rateLimitKey = credentials.email.toLowerCase()
+                    if (isAuthBlocked(rateLimitKey)) {
+                        logger.warn("[AUTH] Rate limit excedido para:", rateLimitKey)
                         return null
                     }
 
