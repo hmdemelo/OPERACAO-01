@@ -30,10 +30,47 @@ function checkLoginRateLimit(ip: string): { limited: boolean; retryAfter: number
     return { limited: false, retryAfter: 0 }
 }
 
+// Detectar bots e requisições maliciosas de vulnerabilidade (ex: WordPress, PHP, ASP)
+function isMaliciousRequest(pathname: string): boolean {
+    const lowerPath = pathname.toLowerCase()
+
+    // Bloquear extensões de arquivos executáveis/scripts comuns de outras tecnologias
+    if (
+        lowerPath.endsWith(".php") ||
+        lowerPath.endsWith(".asp") ||
+        lowerPath.endsWith(".aspx") ||
+        lowerPath.endsWith(".jsp") ||
+        lowerPath.endsWith(".jspx") ||
+        lowerPath.endsWith(".cgi")
+    ) {
+        return true
+    }
+
+    // Bloquear caminhos comuns de WordPress ou outros painéis administrativos vulneráveis
+    if (
+        lowerPath.startsWith("/wp-") ||
+        lowerPath.startsWith("/wordpress") ||
+        lowerPath.startsWith("/wp/") ||
+        lowerPath.startsWith("/cgi-bin") ||
+        lowerPath.startsWith("/phpmyadmin") ||
+        lowerPath.startsWith("/pma") ||
+        lowerPath.startsWith("/adminer")
+    ) {
+        return true
+    }
+
+    return false
+}
+
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
 
-    // 0. Rate limiting no endpoint de login — intercepta antes de liberar /api/auth
+    // 0. Bloquear requisições maliciosas/varreduras de vulnerabilidade imediatamente no Edge
+    if (isMaliciousRequest(pathname)) {
+        return new NextResponse("Bad Request", { status: 400 })
+    }
+
+    // 0.1 Rate limiting no endpoint de login — intercepta antes de liberar /api/auth
     if (pathname === "/api/auth/callback/credentials" && request.method === "POST") {
         const ip =
             request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??

@@ -14,6 +14,8 @@ declare module "next-auth" {
   interface User {
     id: string
     role: Role
+    ipAddress?: string | null
+    userAgent?: string | null
   }
 }
 

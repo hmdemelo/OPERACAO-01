@@ -35,7 +35,7 @@ export const authOptions: NextAuthOptions = {
                 email: { label: "Email", type: "email" },
                 password: { label: "Password", type: "password" },
             },
-            async authorize(credentials) {
+            async authorize(credentials, req) {
                 try {
                     if (!credentials?.email || !credentials?.password) {
                         return null
@@ -68,11 +68,18 @@ export const authOptions: NextAuthOptions = {
                         return null
                     }
 
+                    const ip = (req?.headers?.["x-forwarded-for"] as string | undefined)?.split(",")[0]?.trim()
+                        ?? (req?.headers?.["x-real-ip"] as string | undefined)
+                        ?? null
+                    const ua = (req?.headers?.["user-agent"] as string | undefined)?.slice(0, 255) ?? null
+
                     return {
                         id: user.id,
                         name: user.name,
                         email: user.email,
                         role: user.role,
+                        ipAddress: ip,
+                        userAgent: ua,
                     }
                 } catch (error) {
                     logger.error("Authorize error:", error)
@@ -92,16 +99,20 @@ export const authOptions: NextAuthOptions = {
                 token.id = user.id
                 token.role = user.role
 
-                // Cria a UserSession já no login e guarda o ID no token, para que o
-                // heartbeat atualize exatamente esta sessão (e não todas as abertas
-                // do usuário). Cada login/navegador = uma linha; abas compartilham o
-                // mesmo cookie e portanto o mesmo sessionId.
+                // Cria a UserSession já no login e guarda o ID no token.
+                // Registra o IP e o User Agent de imediato.
                 try {
                     const enabled = await getSetting("tracking_enabled")
                     if (enabled !== "false") {
                         const now = new Date()
                         const us = await prisma.userSession.create({
-                            data: { userId: user.id, loginAt: now, lastSeenAt: now },
+                            data: { 
+                                userId: user.id, 
+                                loginAt: now, 
+                                lastSeenAt: now,
+                                ipAddress: user.ipAddress ?? null,
+                                userAgent: user.userAgent ?? null,
+                            },
                             select: { id: true },
                         })
                         token.sessionId = us.id
