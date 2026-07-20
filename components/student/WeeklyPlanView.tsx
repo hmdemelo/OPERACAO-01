@@ -36,7 +36,7 @@ function renderLinks(text: string) {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.split(urlRegex).flatMap((part, i) => {
         if (part.match(urlRegex)) {
-            return [<a key={i} href={part} target="_blank" rel="noopener noreferrer" className="underline hover:invert">{part}</a>];
+            return [<a key={i} href={part} target="_blank" rel="noopener noreferrer" className="underline hover:invert break-all">{part}</a>];
         }
         return part.split('\n').flatMap((line, j, arr) =>
             j < arr.length - 1 ? [line, <br key={`${i}-${j}`} />] : [line]
@@ -243,7 +243,7 @@ export default function WeeklyPlanView() {
                                             )}
                                         </button>
 
-                                        <div className="flex-1 space-y-1">
+                                        <div className="flex-1 min-w-0 space-y-1">
                                             <div className="flex items-center gap-2">
                                                 {item.subject ? (
                                                     <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded uppercase tracking-wide">
@@ -251,11 +251,11 @@ export default function WeeklyPlanView() {
                                                     </span>
                                                 ) : null}
                                             </div>
-                                            <p className={`text-base ${item.completed ? 'text-muted-foreground line-through' : 'text-card-foreground'}`}>
+                                            <p className={`text-base break-words ${item.completed ? 'text-muted-foreground line-through' : 'text-card-foreground'}`}>
                                                 {item.content || "Sem descrição"}
                                             </p>
                                             {item.notes && (
-                                                <p className="text-xs text-amber-500 mt-1 italic font-medium">
+                                                <p className="text-xs text-amber-500 mt-1 italic font-medium break-words">
                                                     {renderLinks(item.notes)}
                                                 </p>
                                             )}
