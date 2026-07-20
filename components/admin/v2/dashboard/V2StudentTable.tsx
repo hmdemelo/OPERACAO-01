@@ -57,7 +57,7 @@ export function V2StudentTable({ students }: { students: V2StudentRow[] }) {
         return nullAwareCompare(a[sort.col], b[sort.col], mult)
     })
 
-    function SortIcon({ col }: { col: SortCol }) {
+    function renderSortIcon(col: SortCol) {
         if (sort.col !== col) return <ArrowUpDown className="h-3 w-3 opacity-40" />
         return sort.dir === "asc"
             ? <ChevronUp className="h-3 w-3" />
@@ -97,7 +97,7 @@ export function V2StudentTable({ students }: { students: V2StudentRow[] }) {
                                 className="flex items-center gap-1 text-xs hover:text-foreground transition-colors"
                                 onClick={() => toggleSort("name")}
                             >
-                                Aluno <SortIcon col="name" />
+                                Aluno {renderSortIcon("name")}
                             </button>
                         </TableHead>
                         <TableHead className="text-right">
@@ -105,7 +105,7 @@ export function V2StudentTable({ students }: { students: V2StudentRow[] }) {
                                 className="flex items-center gap-1 ml-auto text-xs hover:text-foreground transition-colors"
                                 onClick={() => toggleSort("fase1Pct")}
                             >
-                                F1 · Grade <SortIcon col="fase1Pct" />
+                                F1 · Grade {renderSortIcon("fase1Pct")}
                             </button>
                         </TableHead>
                         <TableHead className="text-right">
@@ -113,7 +113,7 @@ export function V2StudentTable({ students }: { students: V2StudentRow[] }) {
                                 className="flex items-center gap-1 ml-auto text-xs hover:text-foreground transition-colors"
                                 onClick={() => toggleSort("fase2Pct")}
                             >
-                                F2 · Cadernos <SortIcon col="fase2Pct" />
+                                F2 · Cadernos {renderSortIcon("fase2Pct")}
                             </button>
                         </TableHead>
                         <TableHead className="text-right">
@@ -121,7 +121,7 @@ export function V2StudentTable({ students }: { students: V2StudentRow[] }) {
                                 className="flex items-center gap-1 ml-auto text-xs hover:text-foreground transition-colors"
                                 onClick={() => toggleSort("fase3Pct")}
                             >
-                                F3 · Simulados <SortIcon col="fase3Pct" />
+                                F3 · Simulados {renderSortIcon("fase3Pct")}
                             </button>
                         </TableHead>
                         <TableHead className="text-right">
@@ -129,7 +129,7 @@ export function V2StudentTable({ students }: { students: V2StudentRow[] }) {
                                 className="flex items-center gap-1 ml-auto text-xs hover:text-foreground transition-colors"
                                 onClick={() => toggleSort("fase3Count")}
                             >
-                                # Sim. <SortIcon col="fase3Count" />
+                                # Sim. {renderSortIcon("fase3Count")}
                             </button>
                         </TableHead>
                         <TableHead className="text-right text-xs">Anotações</TableHead>
