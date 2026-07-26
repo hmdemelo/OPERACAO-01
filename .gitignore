@@ -54,3 +54,8 @@ HOMEPAGE_AUDIT.md
 *.sql
 dump_prod.sql
 !prisma/migrations/**/*.sql
+
+# Fontes do jogo de primeiros socorros (PDF, PNGs e backups).
+# O jogo publicado é public/primeirossocorros/index.html — autocontido,
+# com as imagens já embutidas em base64.
+/jogo primeiros socorros op01/

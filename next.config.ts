@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  async rewrites() {
+    return [
+      // Jogo estático de primeiros socorros (HTML autocontido em /public).
+      // Rewrite para servir a URL limpa /primeirossocorros.
+      { source: "/primeirossocorros", destination: "/primeirossocorros.html" },
+    ]
+  },
 };
 
 export default nextConfig;
