@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
       // Jogo estático de primeiros socorros (HTML autocontido em /public).
       // Rewrite para servir a URL limpa /primeirossocorros.
       { source: "/primeirossocorros", destination: "/primeirossocorros.html" },
+      // Jogo estático de combate a incêndio (HTML autocontido em /public).
+      { source: "/combateaincendio", destination: "/combateaincendio.html" },
     ]
   },
 };

@@ -55,7 +55,8 @@ HOMEPAGE_AUDIT.md
 dump_prod.sql
 !prisma/migrations/**/*.sql
 
-# Fontes do jogo de primeiros socorros (PDF, PNGs e backups).
-# O jogo publicado é public/primeirossocorros/index.html — autocontido,
-# com as imagens já embutidas em base64.
+# Fontes dos jogos educacionais (PDFs, PNGs, backups e projeto-fonte).
+# O jogo publicado é public/<slug>.html — autocontido, gerado a partir
+# destas pastas (ver build.py quando houver).
 /jogo primeiros socorros op01/
+/jogo noções de combate a incendio/

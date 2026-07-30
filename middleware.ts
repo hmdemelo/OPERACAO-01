@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server"
 import { getToken } from "next-auth/jwt"
 
 // Caminhos que não exigem autenticação nem respeitam manutenção
-const PUBLIC_PATHS = ["/signin", "/maintenance", "/api/auth", "/api/maintenance-status", "/primeirossocorros"]
+const PUBLIC_PATHS = ["/signin", "/maintenance", "/api/auth", "/api/maintenance-status", "/primeirossocorros", "/combateaincendio"]
 
 // Rate limiter para tentativas de login — persiste dentro da mesma Edge isolate.
 // Não é compartilhado entre instâncias paralelas, mas é eficaz contra bots
